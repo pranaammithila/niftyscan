@@ -1,141 +1,204 @@
-from flask import Flask, jsonify
-from flask_cors import CORS
-import yfinance as yf
-import pandas as pd
-import numpy as np
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nifty 15M वॉल्यूम और ट्रेंड स्कैनर (अपडेटेड)</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            background-color: #0d1117; 
+            color: #c9d1d9; 
+            margin: 0; 
+            padding: 20px; 
+        }
+        .container { 
+            max-width: 1350px; 
+            margin: 0 auto; 
+        }
+        h1 { 
+            text-align: center; 
+            color: #58a6ff; 
+            margin-bottom: 5px;
+            font-size: 28px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #8b949e;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .btn-scan { 
+            background-color: #238636; 
+            color: #ffffff; 
+            border: none; 
+            padding: 14px 30px; 
+            font-size: 16px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            border-radius: 6px; 
+            display: block; 
+            margin: 0 auto 30px auto; 
+            transition: background-color 0.2s; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn-scan:hover { 
+            background-color: #2ea043; 
+        }
+        .table-container {
+            overflow-x: auto;
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            text-align: left;
+        }
+        th, td { 
+            padding: 16px 20px; 
+            border-bottom: 1px solid #30363d; 
+        }
+        th { 
+            background-color: #21262d; 
+            color: #58a6ff; 
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        tr:hover { 
+            background-color: #1f242c; 
+        }
+        .badge-buy { 
+            background-color: rgba(56, 139, 253, 0.15); 
+            color: #58a6ff; 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            font-size: 12px; 
+            font-weight: bold; 
+            border: 1px solid rgba(56, 139, 253, 0.4);
+            margin-left: 8px;
+        }
+        .badge-sell { 
+            background-color: rgba(248, 81, 73, 0.15); 
+            color: #f85149; 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            font-size: 12px; 
+            font-weight: bold; 
+            border: 1px solid rgba(248, 81, 73, 0.4);
+            margin-left: 8px;
+        }
+        .text-target { 
+            color: #3fb950; 
+            font-weight: bold; 
+        }
+        .text-sl { 
+            color: #f85149; 
+            font-weight: bold; 
+        }
+        .loading { 
+            text-align: center; 
+            font-size: 16px; 
+            color: #8b949e; 
+            display: none; 
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+        .zone-info {
+            font-size: 13px; 
+            color: #db61a2;
+            background-color: rgba(219, 97, 162, 0.1);
+            padding: 6px 10px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
 
-app = Flask(__name__)
-CORS(app)  # बाहरी HTML फ्रंटएंड को कनेक्ट करने के लिए
-
-# निफ्टी 50 के सभी 50 स्टॉक्स की पूरी लिस्ट
-NIFTY_STOCKS = [
-    'ADANIENT.NS', 'ADANIPORTS.NS', 'APOLLOHOSP.NS', 'ASIANPAINT.NS', 'AXISBANK.NS',
-    'BAJAJ-AUTO.NS', 'BAJAJFINSV.NS', 'BAJFINANCE.NS', 'BHARTIARTL.NS', 'BPCL.NS',
-    'BRITANNIA.NS', 'CIPLA.NS', 'COALINDIA.NS', 'DIVISLAB.NS', 'DRREDDY.NS',
-    'EICHERMOT.NS', 'GRASIM.NS', 'HCLTECH.NS', 'HDFCBANK.NS', 'HDFCLIFE.NS',
-    'HEROMOTOCO.NS', 'HINDALCO.NS', 'HINDUNILVR.NS', 'ICICIBANK.NS', 'INDUSINDBK.NS',
-    'INFY.NS', 'ITC.NS', 'JSWSTEEL.NS', 'KOTAKBANK.NS', 'LT.NS',
-    'LTIM.NS', 'M&M.NS', 'MARUTI.NS', 'NESTLEIND.NS', 'NTPC.NS',
-    'ONGC.NS', 'POWERGRID.NS', 'RELIANCE.NS', 'SBILIFE.NS', 'SBIN.NS',
-    'SHRIRAMFIN.NS', 'SUNPHARMA.NS', 'TATACONSUM.NS', 'TATAMOTORS.NS', 'TATASTEEL.NS',
-    'TCS.NS', 'TECHM.NS', 'TITAN.NS', 'ULTRACEMCO.NS', 'WIPRO.NS'
-]
-
-def calculate_vwap(df):
-    """सटीक VWAP कैलकुलेशन"""
-    df['Date'] = df.index.date
-    typical_price = (df['High'] + df['Low'] + df['Close']) / 3
-    price_vol = typical_price * df['Volume']
-    cum_price_vol = df.groupby('Date')[price_vol.name].transform('cumsum')
-    cum_vol = df.groupby('Date')['Volume'].transform('cumsum')
-    return cum_price_vol / cum_vol
-
-def detect_candle_patterns(df):
-    """हर कैंडल को रीड करके पैटर्न्स डिटेक्ट करने वाला फंक्शन"""
-    O, H, L, C = df['Open'], df['High'], df['Low'], df['Close']
-    body = np.abs(C - O)
-    total_range = H - L
+<div class="container">
+    <h1>Nifty 15-Min हाई वॉल्यूम एडवांस स्कैनर</h1>
+    <div class="subtitle">شرط: वॉल्यूम बूस्ट | कैंडलस्टिक पैटर्न्स (Hammer, Doji) | VWAP, 9-EMA & ATR आधारित ऑटोमैटिक एंट्री-टारगेट लेवल्स</div>
     
-    df['Doji'] = (body <= (total_range * 0.1))
+    <button class="btn-scan" onclick="runScanner()">मार्केट स्कैन करें</button>
     
-    lower_shadow = np.where(C > O, O - L, C - L)
-    upper_shadow = np.where(C > O, H - C, H - O)
-    df['Hammer'] = (lower_shadow >= (2 * body)) & (upper_shadow <= (total_range * 0.1)) & (body > 0)
-    df['Shooting_Star'] = (upper_shadow >= (2 * body)) & (lower_shadow <= (total_range * 0.1)) & (body > 0)
-    df['Bullish_Engulfing'] = (C > O) & (C.shift(1) < O.shift(1)) & (C >= O.shift(1)) & (O <= C.shift(1))
-    df['Bearish_Engulfing'] = (C < O) & (C.shift(1) > O.shift(1)) & (C <= O.shift(1)) & (O >= C.shift(1))
-    
-    return df
+    <div class="loading" id="loadingText">पायथन सर्वर (amitabh.pythonanywhere.com) से एडवांस्ड चार्ट डेटा लिया जा रहा है...</div>
 
-@app.route('/')
-def home():
-    return jsonify({"status": "Server is running perfectly", "message": "Go to /api/scan to get data"})
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>स्टॉक नाम</th>
+                    <th>एक्शन प्रकार</th>
+                    <th>करंट प्राइस</th>
+                    <th>वॉल्यूम बूस्ट</th>
+                    <th>15M सपोर्ट</th>
+                    <th>15M रेजिस्टेंस</th>
+                    <th>टारगेट (1:2)</th>
+                    <th>स्टॉप लॉस</th>
+                    <th>कैंडल पैटर्न और ऑर्डर फ्लो एनालिसिस</th>
+                </tr>
+            </thead>
+            <tbody id="scannerBody">
+                <tr>
+                    <td colspan="9" style="text-align: center; color: #8b949e; padding: 40px 0;">डेटा लोड करने के लिए ऊपर दिए गए बटन पर क्लिक करें।</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
 
-@app.route('/api/scan')
-def scan():
-    scanner_results = []
-    
-    for ticker in NIFTY_STOCKS:
-        try:
-            # 15 मिनट का डेटा डाउनलोड करना
-            df = yf.download(ticker, period="5d", interval="15m", progress=False)
-            if df.empty or len(df) < 20:
-                continue
+<script>
+    async function runScanner() {
+        const loading = document.getElementById('loadingText');
+        const tbody = document.getElementById('scannerBody');
+        
+        loading.style.display = 'block';
+        tbody.innerHTML = '';
+
+        try {
+            const response = await fetch('https://amitabh.pythonanywhere.com/api/scan');
+            const data = await response.json();
             
-            if isinstance(df.columns, pd.MultiIndex):
-                df = df[ticker]
-
-            # इंडिकेटर्स कैलकुलेशन
-            df['EMA_9'] = df['Close'].ewm(span=9, adjust=False).mean()
-            df['EMA_21'] = df['Close'].ewm(span=21, adjust=False).mean()
-            df['VWAP'] = calculate_vwap(df)
+            loading.style.display = 'none';
             
-            # ATR कैलकुलेशन (Stop Loss के लिए वोलैटिलिटी)
-            high_low = df['High'] - df['Low']
-            high_close = np.abs(df['High'] - df['Close'].shift())
-            low_close = np.abs(df['Low'] - df['Close'].shift())
-            tr = pd.concat([high_low, high_close, low_close], axis=1).max(axis=1)
-            df['ATR'] = tr.ewm(span=14, adjust=False).mean()
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: #f85149; padding: 30px 0;">फिलहाल कोई स्टॉक निर्धारित एडवांस्ड कंडीशंस को मैच नहीं कर रहा है।</td></tr>`;
+                return;
+            }
 
-            # कैंडल पैटर्न्स डिटेक्ट करना
-            df = detect_candle_patterns(df)
+            data.forEach(item => {
+                // यह चेक करने के लिए कि ऑर्डर फ्लो में मंदी का सिग्नल तो नहीं है
+                const isSell = item.order_flow.includes("सेलर्स") || item.order_flow.includes("Bearish");
+                const badge = isSell ? `<span class="badge-sell">SHORT</span>` : `<span class="badge-buy">BUY</span>`;
 
-            # 15-Min Pivot Points आधारित Support & Resistance
-            daily_data = yf.download(ticker, period="2d", interval="1d", progress=False)
-            if isinstance(daily_data.columns, pd.MultiIndex):
-                daily_data = daily_data[ticker]
-            
-            prev_day = daily_data.iloc[-2]
-            P = float((prev_day['High'] + prev_day['Low'] + prev_day['Close']) / 3)
-            R1 = float((2 * P) - prev_day['Low'])
-            S1 = float((2 * P) - prev_day['High'])
+                const row = `
+                    <tr>
+                        <td><strong>${item.ticker}</strong></td>
+                        <td>${badge}</td>
+                        <td>₹${item.price}</td>
+                        <td style="color: #e3b341; font-weight: 500;">${item.volume_up}x</td>
+                        <td>₹${item.support}</td>
+                        <td>₹${item.resistance}</td>
+                        <td class="text-target">₹${item.target}</td>
+                        <td class="text-sl">₹${item.sl}</td>
+                        <td><span class="zone-info">${item.order_flow}</span></td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
 
-            latest = df.iloc[-1]
-            prev = df.iloc[-2]
-            
-            current_price = float(latest['Close'])
-            vwap_val = float(latest['VWAP'])
-            ema9 = float(latest['EMA_9'])
-            current_vol = float(latest['Volume'])
-            prev_vol = float(prev['Volume'])
-            atr = float(latest['ATR'])
+        } catch (error) {
+            loading.style.display = 'none';
+            tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: #f85149; padding: 30px 0;">PythonAnywhere सर्वर से कनेक्ट नहीं हो सका। कृपया जांचें कि आपका वेब ऐप वहां रनिंग स्टेट में है या नहीं।</td></tr>`;
+            console.error(error);
+        }
+    }
+</script>
 
-            # 💡 केवल वॉल्यूम बढ़ने की कंडीशन (Current Volume > Previous Volume)
-            # यदि आप दोगुना (2x) चाहते हैं तो इसे: current_vol >= (prev_vol * 2) कर सकते हैं
-            volume_condition = current_vol > prev_vol
-            
-            if volume_condition:
-                # यह तय करने के लिए कि ट्रेंड बुलिश है या बेयरिश (ताकि टारगेट/SL सही बने)
-                is_bullish = current_price > vwap_val and current_price > ema9
-                
-                pattern = "Volume Boost"
-                if latest['Hammer']: pattern = "Hammer Breakout 🔨"
-                elif latest['Bullish_Engulfing']: pattern = "Bullish Engulfing 🔥"
-                elif latest['Shooting_Star']: pattern = "Shooting Star 🌠"
-                elif latest['Bearish_Engulfing']: pattern = "Bearish Engulfing 📉"
-
-                # स्टॉप लॉस और टारगेट कैलकुलेशन (ट्रेंड के आधार पर)
-                if is_bullish:
-                    stop_loss = min(current_price - (1.5 * atr), S1 - 0.5)
-                    target = current_price + (np.abs(current_price - stop_loss) * 2)
-                    order_flow = f"बायर्स मजबूत हैं (वॉल्यूम बूस्ट)"
-                else:
-                    stop_loss = max(current_price + (1.5 * atr), vwap_val)
-                    target = current_price - (np.abs(stop_loss - current_price) * 2)
-                    order_flow = f"सेलर्स का दबाव है (वॉल्यूम बूस्ट)"
-                
-                scanner_results.append({
-                    'ticker': ticker.replace('.NS', ''),
-                    'price': round(current_price, 2),
-                    'volume_up': round(current_vol / prev_vol, 1),
-                    'support': round(S1, 2),
-                    'resistance': round(R1, 2),
-                    'entry': round(current_price, 2),
-                    'target': round(target, 2),
-                    'sl': round(stop_loss, 2),
-                    'order_flow': f"{pattern} | {order_flow}"
-                })
-        except Exception as e:
-            print(f"Error scanning {ticker}: {e}")
-            
-    return jsonify(scanner_results)
+</body>
+</html>
