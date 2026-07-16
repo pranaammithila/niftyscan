@@ -1,0 +1,2 @@
+# niftyscan
+trade stock 
