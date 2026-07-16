@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nifty 50 लाइव ब्राउज़र स्कैनर (सर्वर-मुक्त)</title>
+    <title>Nifty 50 एडवांस लाइव स्कैनर (फेक कैंडल फ़िल्टर मोड)</title>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #0d1117; color: #c9d1d9; margin: 0; padding: 20px; }
-        .container { max-width: 1350px; margin: 0 auto; }
+        .container { max-width: 1400px; margin: 0 auto; }
         h1 { text-align: center; color: #58a6ff; margin-bottom: 5px; font-size: 28px; }
         .subtitle { text-align: center; color: #8b949e; margin-bottom: 25px; font-size: 14px; }
         .control-panel { background-color: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 15px 20px; margin-bottom: 25px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px; }
@@ -21,12 +21,13 @@
         .btn-search { background-color: #8b949e; color: #0d1117; font-weight: bold; cursor: pointer; border-radius: 6px; border: none; padding: 0 15px; }
         .table-container { overflow-x: auto; background-color: #161b22; border: 1px solid #30363d; border-radius: 8px; }
         table { width: 100%; border-collapse: collapse; text-align: left; }
-        th, td { padding: 14px 18px; border-bottom: 1px solid #30363d; }
-        th { background-color: #21262d; color: #58a6ff; font-weight: 600; font-size: 13px; text-transform: uppercase; }
+        th, td { padding: 14px 16px; border-bottom: 1px solid #30363d; font-size: 13px; }
+        th { background-color: #21262d; color: #58a6ff; font-weight: 600; text-transform: uppercase; }
         tr:hover { background-color: #1f242c; }
         .badge-buy { background-color: rgba(63, 185, 80, 0.15); color: #3fb950; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; border: 1px solid rgba(63, 185, 80, 0.4); }
         .badge-sell { background-color: rgba(248, 81, 73, 0.15); color: #f85149; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; border: 1px solid rgba(248, 81, 73, 0.4); }
         .badge-range { background-color: rgba(242, 201, 76, 0.15); color: #f2c94c; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; border: 1px solid rgba(242, 201, 76, 0.4); }
+        .text-entry { color: #58a6ff; font-weight: bold; }
         .text-target { color: #3fb950; font-weight: bold; }
         .text-sl { color: #f85149; font-weight: bold; }
         .loading { text-align: center; font-size: 15px; color: #8b949e; display: none; margin-bottom: 20px; font-style: italic; }
@@ -37,15 +38,14 @@
 <body>
 
 <div class="container">
-    <h1>Nifty 50 सुपर लाइव स्कैनर (100% सर्वर-मुक्त)</h1>
-    <div class="subtitle">सीधे ब्राउज़र से याहू फाइनेंस डेटा एनालिसिस | स्क्रीन से चुनें सभी स्टॉक्स, टॉप 10 बुलिश, या टॉप 10 बेयरिश</div>
+    <h1>Nifty 50 एडवांस लाइव स्कैनर (फ़िल्टर्ड मोड)</h1>
+    <div class="subtitle">सटीक ATR रिस्क मैनेजमेंट और पिवट लेवल्स के साथ फेक कैंडल प्रोटेक्शन सिस्टम चालू है</div>
     
-    <!-- ⚙️ एडवांस कंट्रोल पैनल -->
     <div class="control-panel">
         <div class="mode-buttons">
             <button id="btnAll" class="btn active-all" onclick="setFilter('all')">सभी स्टॉक्स</button>
-            <button id="btnBullish" class="btn" onclick="setFilter('bullish')">टॉप 10 बुलिश (🟢)</button>
-            <button id="btnBearish" class="btn" onclick="setFilter('bearish')">टॉप 10 बेयरिश (🔴)</button>
+            <button id="btnBullish" class="btn" onclick="setFilter('bullish')">सटीक बुलिश ट्रेंड (🟢)</button>
+            <button id="btnBearish" class="btn" onclick="setFilter('bearish')">सटीक बेयरिश ट्रेंड (🔴)</button>
         </div>
         
         <div class="search-box">
@@ -55,26 +55,27 @@
     </div>
     
     <div id="pBarContainer" class="progress-bar-container"><div id="progressBar" class="progress-bar"></div></div>
-    <div class="loading" id="loadingText">याहू फाइनेंस से सुरक्षित प्रॉक्सी के जरिए लाइव डेटा फेच किया जा रहा है...</div>
+    <div class="loading" id="loadingText">याहू फाइनेंस से डेटा एनालाइज किया जा रहा है, फेक कैंडल्स हटाई जा रही हैं...</div>
 
     <div class="table-container">
         <table>
             <thead>
                 <tr>
                     <th>स्टॉक नाम</th>
-                    <th>ज़ोन प्रकार</th>
+                    <th>ट्रेंड ज़ोन</th>
                     <th>करंट प्राइस</th>
-                    <th>वॉल्यूम स्थिति</th>
-                    <th>15M सपोर्ट</th>
-                    <th>15M रेजिस्टेंस</th>
-                    <th>टारगेट (1:2)</th>
-                    <th>स्टॉप लॉस</th>
-                    <th>ऑर्डर फ्लो एनालिसिस</th>
+                    <th>वॉल्यूम बूस्ट</th>
+                    <th>डेली सपोर्ट (S1)</th>
+                    <th>डेली रेजिस्टेंस (R1)</th>
+                    <th>एंट्री लेवल</th>
+                    <th>सटीक टारगेट (1:2)</th>
+                    <th>सटीक स्टॉपलॉस</th>
+                    <th>एनालिसिस स्टेटस</th>
                 </tr>
             </thead>
             <tbody id="scannerBody">
                 <tr>
-                    <td colspan="9" style="text-align: center; color: #8b949e; padding: 40px 0;">डेटा लोड करने के लिए ऊपर दिए गए बटनों का उपयोग करें।</td>
+                    <td colspan="10" style="text-align: center; color: #8b949e; padding: 40px 0;">डेटा लोड करने के लिए ऊपर दिए गए बटनों का उपयोग करें।</td>
                 </tr>
             </tbody>
         </table>
@@ -82,7 +83,6 @@
 </div>
 
 <script>
-    // निफ्टी 50 स्टॉक्स की लिस्ट
     const NIFTY_STOCKS = [
         'ADANIENT', 'ADANIPORTS', 'APOLLOHOSP', 'ASIANPAINT', 'AXISBANK',
         'BAJAJ-AUTO', 'BAJAJFINSV', 'BAJFINANCE', 'BHARTIARTL', 'BPCL',
@@ -99,12 +99,10 @@
     let calculatedData = []; 
     let currentFilter = 'all';
 
-    // पेज लोड होते ही डेटा फेच करना शुरू करें
     window.onload = function() {
         fetchAllStocksDirectly();
     };
 
-    // 1. याहू फाइनेंस से सुरक्षित पब्लिक CORS प्रॉक्सी के ज़रिए डेटा फेच करना
     async function fetchAllStocksDirectly() {
         const loading = document.getElementById('loadingText');
         const pContainer = document.getElementById('pBarContainer');
@@ -115,7 +113,6 @@
         calculatedData = [];
         
         let count = 0;
-        // ओपन-सोर्स सुरक्षित CORS बाईपास प्रॉक्सी
         const proxyUrl = "https://api.allorigins.win/get?url=";
 
         for (let symbol of NIFTY_STOCKS) {
@@ -129,9 +126,12 @@
                 const indicators = result.indicators.quote[0];
                 const timestamps = result.timestamp;
                 const closePrices = indicators.close;
+                const openPrices = indicators.open;
+                const highPrices = indicators.high;
+                const lowPrices = indicators.low;
                 const volumes = indicators.volume;
 
-                if (!closePrices || closePrices.length < 20) continue;
+                if (!closePrices || closePrices.length < 25) continue;
 
                 let idx = closePrices.length - 1;
                 while (idx >= 0 && closePrices[idx] == null) { idx--; }
@@ -139,18 +139,21 @@
 
                 const currentPrice = closePrices[idx];
                 const currentVol = volumes[idx] || 0;
-                const prevVol = volumes[idx - 1] || 1;
+                
+                // 🧮 वॉल्यूम एवरेज (फेक ब्रेकआउट फिल्टर के लिए)
+                let totalVolSum = 0;
+                for(let v=idx-5; v<idx; v++) { totalVolSum += (volumes[v] || 0); }
+                const avgVolume = totalVolSum / 5;
+                const volumeRatio = currentVol / (avgVolume > 0 ? avgVolume : 1);
 
                 // 🧮 9-EMA कैलकुलेशन
                 let ema9 = closePrices[0] || currentPrice;
                 const k = 2 / (9 + 1);
                 for (let i = 1; i <= idx; i++) {
-                    if (closePrices[i] != null) {
-                        ema9 = (closePrices[i] * k) + (ema9 * (1 - k));
-                    }
+                    if (closePrices[i] != null) ema9 = (closePrices[i] * k) + (ema9 * (1 - k));
                 }
 
-                // 🧮 VWAP कैलकुलेशन (आज की करंट डेट के आधार पर)
+                // 🧮 VWAP कैलकुलेशन (सिर्फ आज के इंट्राडे सेशन का)
                 let totalPriceVolume = 0;
                 let totalVolume = 0;
                 let currentDay = new Date(timestamps[idx] * 1000).getDate();
@@ -158,47 +161,100 @@
                 for (let i = idx; i >= 0; i--) {
                     let checkDay = new Date(timestamps[i] * 1000).getDate();
                     if (checkDay !== currentDay) break; 
-                    
                     if (closePrices[i] != null && volumes[i] != null) {
-                        let typPrice = (result.indicators.quote[0].high[i] + result.indicators.quote[0].low[i] + closePrices[i]) / 3;
+                        let typPrice = (highPrices[i] + lowPrices[i] + closePrices[i]) / 3;
                         totalPriceVolume += typPrice * volumes[i];
                         totalVolume += volumes[i];
                     }
                 }
                 const vwapVal = totalVolume > 0 ? (totalPriceVolume / totalVolume) : currentPrice;
 
-                // Technical levels calculations
-                const atr = currentPrice * 0.005; 
-                const S1 = currentPrice * 0.99;  
-                const R1 = currentPrice * 1.01;  
+                // 🧮 True Range & Real ATR (14) कैलकुलेशन
+                let trSum = 0;
+                for (let i = idx - 14; i <= idx; i++) {
+                    let h = highPrices[i], l = lowPrices[i], c_prev = closePrices[i - 1] || closePrices[i];
+                    let tr = Math.max(h - l, Math.abs(h - c_prev), Math.abs(l - c_prev));
+                    trSum += tr;
+                }
+                const realAtr = trSum / 15;
 
-                let zoneStatus = "साइडवेज / रेंज 🟡";
-                let score = 0; 
+                // 🧮 डेली पिवट पॉइंट्स (सपोर्ट S1 और रेजिस्टेंस R1)
+                let lastTimestamp = timestamps[idx];
+                let prevDayIdx = idx;
+                while (prevDayIdx >= 0 && new Date(timestamps[prevDayIdx] * 1000).getDate() === currentDay) { prevDayIdx--; }
                 
+                let s_high = highPrices[prevDayIdx] || currentPrice;
+                let s_low = lowPrices[prevDayIdx] || currentPrice;
+                let s_close = closePrices[prevDayIdx] || currentPrice;
+                
+                const P = (s_high + s_low + s_close) / 3;
+                const R1 = (2 * P) - s_low;
+                const S1 = (2 * P) - s_high;
+
+                // 🚨 फेक कैंडल प्रोटेक्शन और फिल्टर लॉजिक
+                let zoneStatus = "साइडवेज / रेंज 🟡";
+                let isBullish = false;
+                let isBearish = false;
+                let analysisNote = "लाइन के बीच फंसा (No Trade)";
+                
+                // कंडीशन 1: प्राइस दोनों लाइनों के ऊपर हो + वॉल्यूम बूस्ट हो (बुलिश)
                 if (currentPrice > vwapVal && currentPrice > ema9) {
-                    zoneStatus = "बुलिश ज़ोन 🟢";
-                    score = (currentPrice - vwapVal) + (currentPrice - ema9);
-                } else if (currentPrice < vwapVal && currentPrice < ema9) {
-                    zoneStatus = "बेयरिश ज़ोन 🔴";
-                    score = (currentPrice - vwapVal) + (currentPrice - ema9); 
+                    if (volumeRatio > 1.1) { // 10% से ज्यादा वॉल्यूम बूस्ट जरूरी है फेक सिग्नल रोकने के लिए
+                        zoneStatus = "बुलिश ज़ोन 🟢";
+                        isBullish = true;
+                        analysisNote = "मजबूत ब्रेकआउट (Buy Trade)";
+                    } else {
+                        analysisNote = "कम वॉल्यूम, फेक कैंडल का खतरा ⚠️";
+                    }
+                } 
+                // कंडीशन 2: प्राइस दोनों लाइनों के नीचे हो + वॉल्यूम बूस्ट हो (बेयरिश)
+                else if (currentPrice < vwapVal && currentPrice < ema9) {
+                    if (volumeRatio > 1.1) {
+                        zoneStatus = "बेयरिश ज़ोन 🔴";
+                        isBearish = true;
+                        analysisNote = "मजबूत ब्रेकडाउन (Short Trade)";
+                    } else {
+                        analysisNote = "कम वॉल्यूम, फेक ब्रेकडाउन का खतरा ⚠️";
+                    }
                 }
 
-                let stopLoss = currentPrice > vwapVal ? Math.min(currentPrice - (1.5 * atr), S1) : Math.max(currentPrice + (1.5 * atr), vwapVal);
-                let target = currentPrice > vwapVal ? currentPrice + (Math.abs(currentPrice - stopLoss) * 2) : currentPrice - (Math.abs(stopLoss - currentPrice) * 2);
+                // 🎯 सटीक लेवल्स मैनेजमेंट
+                let entryLevel = currentPrice;
+                let stopLoss, target;
+
+                if (isBullish) {
+                    // स्टॉपलॉस: करंट प्राइस से 1.5 गुना ATR नीचे या सपोर्ट S1 के थोड़ा नीचे (जो सुरक्षित हो)
+                    stopLoss = Math.min(currentPrice - (1.5 * realAtr), S1 - (currentPrice * 0.001));
+                    // टारगेट: 1:2 रिस्क रिवॉर्ड (जितना स्टॉपलॉस बड़ा है, उसका डबल टारगेट ऊपर)
+                    target = currentPrice + (Math.abs(currentPrice - stopLoss) * 2);
+                } else if (isBearish) {
+                    // स्टॉपलॉस: करंट प्राइस से 1.5 गुना ATR ऊपर या रेजिस्टेंस/VWAP के थोड़ा ऊपर
+                    stopLoss = Math.max(currentPrice + (1.5 * realAtr), vwapVal + (currentPrice * 0.001));
+                    // टारगेट: 1:2 रिस्क रिवॉर्ड नीचे की तरफ
+                    target = currentPrice - (Math.abs(stopLoss - currentPrice) * 2);
+                } else {
+                    // साइडवेज मार्केट के लिए सामान्य लेवल्स
+                    stopLoss = currentPrice - (1.2 * realAtr);
+                    target = currentPrice + (1.2 * realAtr);
+                }
+
+                // स्कोरिंग सिस्टम (टॉप 10 रैंकिंग के लिए)
+                let score = isBullish ? (currentPrice - vwapVal) * volumeRatio : (isBearish ? (vwapVal - currentPrice) * volumeRatio : 0);
 
                 calculatedData.push({
                     ticker: symbol,
                     price: currentPrice,
-                    volume_up: (currentVol / (prevVol > 0 ? prevVol : 1)).toFixed(1),
+                    volume_up: volumeRatio.toFixed(1),
                     support: S1,
                     resistance: R1,
-                    entry: currentPrice,
+                    entry: entryLevel,
                     target: target,
                     sl: stopLoss,
                     order_flow: zoneStatus,
                     score: score,
-                    isBullish: currentPrice > vwapVal && currentPrice > ema9,
-                    isBearish: currentPrice < vwapVal && currentPrice < ema9
+                    isBullish: isBullish,
+                    isBearish: isBearish,
+                    note: analysisNote
                 });
 
             } catch (e) {
@@ -216,7 +272,6 @@
         applyHtmlFilter();
     }
 
-    // 2. फ़िल्टर बटन बदलने का फंक्शन
     function setFilter(filterType) {
         currentFilter = filterType;
         document.getElementById('customTicker').value = ''; 
@@ -228,20 +283,18 @@
         applyHtmlFilter();
     }
 
-    // 3. डेटा को 10 बुलिश या 10 बेयरिश में शॉर्टलिस्ट करना
     function applyHtmlFilter() {
         let displayData = [...calculatedData];
 
         if (currentFilter === 'bullish') {
             displayData = displayData.filter(item => item.isBullish).sort((a, b) => b.score - a.score).slice(0, 10);
         } else if (currentFilter === 'bearish') {
-            displayData = displayData.filter(item => item.isBearish).sort((a, b) => a.score - b.score).slice(0, 10);
+            displayData = displayData.filter(item => item.isBearish).sort((a, b) => b.score - a.score).slice(0, 10);
         }
 
         renderTable(displayData);
     }
 
-    // 4. किसी भी स्टॉक को अलग से खोजना (जैसे ZOMATO)
     async function searchStock() {
         const searchInput = document.getElementById('customTicker').value.trim().toUpperCase();
         if (!searchInput) { alert('कृपया स्टॉक का नाम लिखें!'); return; }
@@ -255,53 +308,22 @@
         loading.style.display = 'block';
         tbody.innerHTML = '';
 
-        const proxyUrl = "https://api.allorigins.win/get?url=";
-
-        try {
-            const filtered = calculatedData.filter(item => item.ticker === searchInput);
-            if (filtered.length > 0) {
-                renderTable(filtered);
-                loading.style.display = 'none';
-                return;
-            }
-
-            const targetUrl = encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${searchInput}.NS?range=5d&interval=15m`);
-            const response = await fetch(`${proxyUrl}${targetUrl}`);
-            const proxyJson = await response.json();
-            const json = JSON.parse(proxyJson.contents);
-            const result = json.chart.result[0];
-            const closePrices = result.indicators.quote[0].close;
-            
-            let idx = closePrices.length - 1;
-            while (idx >= 0 && closePrices[idx] == null) { idx--; }
-            let cp = closePrices[idx];
-            
-            tbody.innerHTML = `
-                <tr>
-                    <td><strong>${searchInput}</strong></td>
-                    <td><span class="badge-buy">LIVE CHECK</span></td>
-                    <td>₹${cp.toFixed(2)}</td>
-                    <td>1.0x</td>
-                    <td>₹${(cp*0.99).toFixed(2)}</td>
-                    <td>₹${(cp*1.01).toFixed(2)}</td>
-                    <td class="text-target">₹${(cp*1.02).toFixed(2)}</td>
-                    <td class="text-sl">₹${(cp*0.98).toFixed(2)}</td>
-                    <td><span style="font-size: 13px;">कस्टम सर्च सफल 🟢</span></td>
-                </tr>
-            `;
-        } catch (e) {
-            tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: #f85149; padding: 30px 0;">स्टॉक डेटा नहीं मिल सका। कृपया सही नाम दर्ज करें।</td></tr>`;
+        const filtered = calculatedData.filter(item => item.ticker === searchInput);
+        if (filtered.length > 0) {
+            renderTable(filtered);
+            loading.style.display = 'none';
+        } else {
+            tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: #e3b341; padding: 30px 0;">स्टॉक "${searchInput}" निफ्टी 50 के लोडेड डेटा में मौजूद नहीं है। लाइव मार्केट में दोबारा प्रयास करें।</td></tr>`;
+            loading.style.display = 'none';
         }
-        loading.style.display = 'none';
     }
 
-    // 5. टेबल प्रिंट करने का कॉमन फंक्शन
     function renderTable(dataList) {
         const tbody = document.getElementById('scannerBody');
         tbody.innerHTML = '';
 
         if (dataList.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: #8b949e; padding: 30px 0;">इस केटेगरी में फिलहाल कोई स्टॉक उपलब्ध नहीं है।</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: #8b949e; padding: 30px 0;">इस फ़िल्टर मानदंड के अनुसार फिलहाल कोई वास्तविक ट्रेंडिंग स्टॉक नहीं मिला (फेक सिग्नल्स हटा दिए गए हैं)।</td></tr>`;
             return;
         }
 
@@ -309,6 +331,11 @@
             let badge = `<span class="badge-range">SIDEWAYS</span>`;
             if(item.isBullish) badge = `<span class="badge-buy">BULLISH</span>`;
             if(item.isBearish) badge = `<span class="badge-sell">BEARISH</span>`;
+
+            let noteStyle = "color: #8b949e;";
+            if(item.isBullish) noteStyle = "color: #3fb950; font-weight: 500;";
+            if(item.isBearish) noteStyle = "color: #f85149; font-weight: 500;";
+            if(item.note.includes("फेक")) noteStyle = "color: #e3b341; font-style: italic;";
 
             const row = `
                 <tr>
@@ -318,9 +345,10 @@
                     <td style="color: #e3b341; font-weight: 500;">${item.volume_up}x</td>
                     <td>₹${item.support.toFixed(2)}</td>
                     <td>₹${item.resistance.toFixed(2)}</td>
+                    <td class="text-entry">₹${item.entry.toFixed(2)}</td>
                     <td class="text-target">₹${item.target.toFixed(2)}</td>
                     <td class="text-sl">₹${item.sl.toFixed(2)}</td>
-                    <td><span style="font-size: 13px;">${item.order_flow}</span></td>
+                    <td><span style="${noteStyle}">${item.note}</span></td>
                 </tr>
             `;
             tbody.innerHTML += row;
