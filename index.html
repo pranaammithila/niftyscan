@@ -1,403 +1,70 @@
-<!DOCTYPE html>
-<html lang="hi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nifty 50 प्रो प्राइस एक्शन एवं अनुमान स्कैनर</title>
-    <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #0d1117; color: #c9d1d9; margin: 0; padding: 20px; }
-        .container { max-width: 1500px; margin: 0 auto; }
-        h1 { text-align: center; color: #58a6ff; margin-bottom: 5px; font-size: 28px; }
-        .subtitle { text-align: center; color: #8b949e; margin-bottom: 25px; font-size: 14px; }
-        
-        .control-panel { background-color: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 15px 20px; margin-bottom: 25px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px; }
-        .section-group { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; }
-        .group-title { font-size: 12px; color: #8b949e; font-weight: bold; text-transform: uppercase; margin-right: 5px; }
-        
-        .btn { color: #ffffff; border: none; padding: 10px 16px; font-size: 13px; font-weight: bold; cursor: pointer; border-radius: 6px; transition: background-color 0.2s; background-color: #21262d; border: 1px solid #30363d; }
-        .btn.active-all { background-color: #1f6feb; border-color: #388bfd; }
-        .btn.active-bullish { background-color: #238636; border-color: #2ea043; }
-        .btn.active-bearish { background-color: #da3637; border-color: #f85149; }
-        .btn.active-tf { background-color: #f2c94c; color: #0d1117; border-color: #f2c94c; }
-        
-        .search-box { display: flex; gap: 8px; }
-        .search-input { background-color: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 8px 12px; color: #c9d1d9; font-size: 14px; width: 180px; }
-        .search-input:focus { border-color: #58a6ff; outline: none; }
-        .btn-search { background-color: #8b949e; color: #0d1117; font-weight: bold; cursor: pointer; border-radius: 6px; border: none; padding: 0 15px; }
-        
-        .table-container { overflow-x: auto; background-color: #161b22; border: 1px solid #30363d; border-radius: 8px; }
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th, td { padding: 14px 12px; border-bottom: 1px solid #30363d; font-size: 13px; vertical-align: top; }
-        th { background-color: #21262d; color: #58a6ff; font-weight: 600; text-transform: uppercase; }
-        tr:hover { background-color: #1f242c; }
-        
-        .badge-buy { background-color: rgba(63, 185, 80, 0.15); color: #3fb950; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; border: 1px solid rgba(63, 185, 80, 0.4); }
-        .badge-sell { background-color: rgba(248, 81, 73, 0.15); color: #f85149; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; border: 1px solid rgba(248, 81, 73, 0.4); }
-        .badge-range { background-color: rgba(242, 201, 76, 0.15); color: #f2c94c; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; border: 1px solid rgba(242, 201, 76, 0.4); }
-        
-        .text-entry { color: #58a6ff; font-weight: bold; }
-        .text-target { color: #3fb950; font-weight: bold; }
-        .text-sl { color: #f85149; font-weight: bold; }
-        
-        .analysis-block { display: flex; flex-direction: column; gap: 4px; }
-        .pattern-badge { background-color: rgba(242, 201, 76, 0.1); color: #f2c94c; border: 1px dashed #f2c94c; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; width: fit-content; }
-        .predict-badge { background-color: rgba(88, 166, 255, 0.1); color: #58a6ff; border: 1px solid rgba(88, 166, 255, 0.3); padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 500; width: fit-content; }
-        .loading { text-align: center; font-size: 15px; color: #8b949e; display: none; margin-bottom: 20px; font-style: italic; }
-    </style>
-</head>
-<body>
+<!DOCTYPE html><html lang="hi"><head>    <meta charset="UTF-8">    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <title>Nifty 50 एवं ऑल NSE प्रो प्राइस एक्शन स्कैनर</title>    <style>        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #0d1117; color: #c9d1d9; margin: 0; padding: 10px; }        .container { max-width: 1600px; margin: 0 auto; }        h1 { text-align: center; color: #58a6ff; margin-bottom: 5px; font-size: 22px; }        .subtitle { text-align: center; color: #8b949e; margin-bottom: 20px; font-size: 12px; }                .control-panel { background-color: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 15px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 15px; }        .section-group { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }        .group-title { font-size: 12px; color: #8b949e; font-weight: bold; text-transform: uppercase; width: 100%; margin-bottom: -5px; }                .btn { color: #ffffff; border: none; padding: 8px 12px; font-size: 12px; font-weight: bold; cursor: pointer; border-radius: 6px; flex: 1 1 auto; text-align: center; background-color: #21262d; border: 1px solid #30363d; transition: background 0.2s; }        .btn.active-all { background-color: #1f6feb; border-color: #388bfd; }        .btn.active-bullish { background-color: #238636; border-color: #2ea043; }        .btn.active-bearish { background-color: #da3637; border-color: #f85149; }        .btn.active-tf { background-color: #f2c94c; color: #0d1117; border-color: #f2c94c; }                .search-box { display: flex; gap: 8px; width: 100%; }        .search-input { background-color: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 8px; color: #c9d1d9; font-size: 13px; flex: 1; text-transform: uppercase; }        .btn-search { background-color: #8b949e; color: #0d1117; padding: 0 15px; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; }                .table-container { overflow-x: auto; background-color: #161b22; border: 1px solid #30363d; border-radius: 8px; -webkit-overflow-scrolling: touch; }        table { width: 100%; border-collapse: collapse; text-align: left; min-width: 1100px; }        th, td { padding: 12px 10px; border-bottom: 1px solid #30363d; font-size: 12px; vertical-align: top; }        th { background-color: #21262d; color: #58a6ff; font-weight: 600; text-transform: uppercase; }        tr:hover { background-color: #1f242c; }                .badge-buy { background-color: rgba(63, 185, 80, 0.15); color: #3fb950; padding: 4px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid rgba(63, 185, 80, 0.4); }        .badge-sell { background-color: rgba(248, 81, 73, 0.15); color: #f85149; padding: 4px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid rgba(248, 81, 73, 0.4); }        .badge-range { background-color: rgba(242, 201, 76, 0.15); color: #f2c94c; padding: 4px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid rgba(242, 201, 76, 0.4); }                .text-entry { color: #58a6ff; font-weight: bold; }        .text-target { color: #3fb950; font-weight: bold; }        .text-sl { color: #f85149; font-weight: bold; }        .loading { text-align: center; font-size: 13px; color: #8b949e; display: none; margin-bottom: 15px; font-style: italic; }                .grid-leaderboard { display: grid; grid-template-columns: 1fr; gap: 15px; margin-top: 20px; }        .lead-card { background-color: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px; }        .lead-title { font-size: 14px; font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #30363d; padding-bottom: 5px; display: flex; justify-content: space-between; }        .lead-item { display: flex; justify-content: space-between; font-size: 12px; padding: 6px 0; border-bottom: 1px dashed #21262d; }                @media (min-width: 768px) {            body { padding: 20px; }            h1 { font-size: 28px; }            .subtitle { font-size: 14px; }            .control-panel { flex-direction: row; justify-content: space-between; }            .group-title { width: auto; margin-bottom: 0; }            .search-box { width: auto; }            .search-input { width: 180px; }            .grid-leaderboard { grid-template-columns: 1fr 1fr 1fr; }        }    </style></head><body>
+<div class="container">    <h1>Nifty 50 एवं ऑल NSE प्रो प्राइस एक्शन स्कैनर</h1>    <div class="subtitle">यूनिवर्सल स्टॉक सर्च इंजन | एडवांस्ड कैंडलस्टिक मोमेंटम एंट्री एडवाइज़र (फिक्स्ड)</div>        <div class="control-panel">        <div class="section-group">            <span class="group-title">टाइमफ़्रेम:</span>            <button id="tf15m" class="btn active-tf" onclick="changeTimeframe('15m', '5d')">15 मिनट</button>            <button id="tf1h" class="btn" onclick="changeTimeframe('1h', '30d')">1 घंटा</button>            <button id="tf1d" class="btn" onclick="changeTimeframe('1d', '60d')">Daily</button>        </div>
+        <div class="section-group">            <span class="group-title">फ़िल्टर:</span>            <button id="btnAll" class="btn active-all" onclick="setFilter('all')">सभी स्टॉक्स</button>            <button id="btnBullish" class="btn" onclick="setFilter('bullish')">सटीक बुलिश</button>            <button id="btnBearish" class="btn" onclick="setFilter('bearish')">सटीक बेयरिश</button>        </div>                <div class="search-box">            <input type="text" id="customTicker" class="search-input" placeholder="NSE स्टॉक सिम्बॉल लिखें (उदा. ZOMATO, SBIN)">            <button class="btn btn-search" onclick="searchStock()">खोजें / स्कैन करें</button>        </div>    </div>        <div class="loading" id="loadingText" style="display: block;">याहू फाइनेंस से ऐतिहासिक कैंडल और मोमेंटम डेटा कैलकुलेट हो रहा है...</div>
+    <div class="table-container">        <table>            <thead>                <tr>                    <th>स्टॉक नाम</th>                    <th>ज़ोन स्थिति</th>                    <th>लाइव प्राइस / वॉल्यूम</th>                    <th>सपोर्ट / रेजिस्टेंस (दूरी)</th>                    <th>एंट्री भाव</th>                    <th>टारगेट (1:2) / SL</th>                    <th>स्मार्ट कैंडलस्टिक रीडिंग एवं एंट्री सलाह</th>                </tr>            </thead>            <tbody id="scannerBody">                <tr>                    <td colspan="7" style="text-align: center; color: #8b949e; padding: 40px 0;">डेटा प्रोसेस हो रहा है...</td>                </tr>            </tbody>        </table>    </div>
+    <div class="grid-leaderboard">        <div class="lead-card">            <div class="lead-title" style="color: #3fb950;">🟢 टॉप गेनर्स <span>बदलाव</span></div>            <div id="gainerBody"><div style="color:#8b949e; font-size:12px;">भोर से गणना जारी है...</div></div>        </div>        <div class="lead-card">            <div class="lead-title" style="color: #f85149;">🔴 टॉप लूजर्स <span>बदलाव</span></div>            <div id="loserBody"><div style="color:#8b949e; font-size:12px;">कैलकुलेट हो रहा है...</div></div>        </div>        <div class="lead-card">            <div class="lead-title" style="color: #f2c94c;">⚡ हाई वॉल्यूम ब्रेकआउट्स <span>वॉल्यूम बूस्ट</span></div>            <div id="volumeBody"><div style="color:#8b949e; font-size:12px;">स्कैनिंग जारी है...</div></div>        </div>    </div></div>
+<script>    let NIFTY_STOCKS = [        'ADANIENT', 'ADANIPORTS', 'APOLLOHOSP', 'ASIANPAINT', 'AXISBANK',        'BAJAJ-AUTO', 'BAJAJFINSV', 'BAJFINANCE', 'BHARTIARTL', 'BPCL',        'BRITANNIA', 'CIPLA', 'COALINDIA', 'DIVISLAB', 'DRREDDY',        'EICHERMOT', 'GRASIM', 'HCLTECH', 'HDFCBANK', 'HDFCLIFE',        'HEROMOTOCO', 'HINDALCO', 'HINDUNILVR', 'ICICIBANK', 'INDUSINDBK',        'INFY', 'ITC', 'JSWSTEEL', 'KOTAKBANK', 'LT',        'LTIM', 'M&M', 'MARUTI', 'NESTLEIND', 'NTPC',        'ONGC', 'POWERGRID', 'RELIANCE', 'SBILIFE', 'SBIN',        'SHRIRAMFIN', 'SUNPHARMA', 'TATACONSUM', 'TATAMOTORS', 'TATASTEEL',        'TCS', 'TECHM', 'TITAN', 'ULTRACEMCO', 'WIPRO'    ];
+    let calculatedData = [];     let currentFilter = 'all';    let currentInterval = '15m';    let currentRange = '5d';
 
-<div class="container">
-    <h1>Nifty 50 प्रो प्राइस एक्शन एवं अनुमान डैशबोर्ड</h1>
-    <div class="subtitle">आगे-पीछे का चार्ट एनालिसिस मोड | ऐतिहासिक कैंडल पैटर्न ट्रैकर एवं एडवांस अनुमान कैलकुलेटर</div>
-    
-    <div class="control-panel">
-        <div class="section-group">
-            <span class="group-title">टाइमफ़्रेम:</span>
-            <button id="tf15m" class="btn active-tf" onclick="changeTimeframe('15m', '5d')">15 मिनट (Intraday)</button>
-            <button id="tf1h" class="btn" onclick="changeTimeframe('1h', '30d')">1 घंटा (Swing)</button>
-            <button id="tf1d" class="btn" onclick="changeTimeframe('1d', '60d')">Daily (Positional)</button>
-        </div>
+    window.onload = function() { fetchAllStocksBulk(); };
 
-        <div class="section-group">
-            <span class="group-title">फ़िल्टर:</span>
-            <button id="btnAll" class="btn active-all" onclick="setFilter('all')">सभी स्टॉक्स</button>
-            <button id="btnBullish" class="btn" onclick="setFilter('bullish')">सटीक बुलिश (🟢)</button>
-            <button id="btnBearish" class="btn" onclick="setFilter('bearish')">सटीक बेयरिश (🔴)</button>
-        </div>
-        
-        <div class="search-box">
-            <input type="text" id="customTicker" class="search-input" placeholder="उदा. SBIN, RELIANCE">
-            <button class="btn btn-search" onclick="searchStock()">खोजें</button>
-        </div>
-    </div>
-    
-    <div class="loading" id="loadingText" style="display: block;">याहू फाइनेंस से ऐतिहासिक डेटा और चार्ट पैटर्न्स का अनुमान लगाया जा रहा है...</div>
+    function changeTimeframe(interval, range) {        currentInterval = interval;        currentRange = range;                document.getElementById('tf15m').className = 'btn' + (interval === '15m' ? ' active-tf' : '');        document.getElementById('tf1h').className = 'btn' + (interval === '1h' ? ' active-tf' : '');        document.getElementById('tf1d').className = 'btn' + (interval === '1d' ? ' active-tf' : '');                fetchAllStocksBulk();    }
 
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>स्टॉक नाम</th>
-                    <th>ट्रेंड ज़ोन</th>
-                    <th>करंट प्राइस</th>
-                    <th>वॉल्यूम बूस्ट</th>
-                    <th>सपोर्ट Level</th>
-                    <th>रेजिस्टेंस Level</th>
-                    <th>एंट्री प्राइस</th>
-                    <th>टारगेट (1:2)</th>
-                    <th>स्टॉपलॉस</th>
-                    <th>आगे-पीछे का चार्ट एनालिसिस एवं अनुमान</th>
-                </tr>
-            </thead>
-            <tbody id="scannerBody">
-                <tr>
-                    <td colspan="10" style="text-align: center; color: #8b949e; padding: 40px 0;">डेटा प्रोसेस हो रहा है, कृपया 2-3 सेकंड प्रतीक्षा करें...</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
+    function processStockJson(json, symbol) {        if(!json || !json.chart || !json.chart.result || !json.chart.result[0]) return null;        const result = json.chart.result[0];        const indicators = result.indicators.quote[0];        const timestamps = result.timestamp;        
+        if(!indicators || !indicators.close) return null;
+        const closePrices = indicators.close;        const openPrices = indicators.open;        const highPrices = indicators.high;        const lowPrices = indicators.low;        const volumes = indicators.volume;
 
-<script>
-    const NIFTY_STOCKS = [
-        'ADANIENT', 'ADANIPORTS', 'APOLLOHOSP', 'ASIANPAINT', 'AXISBANK',
-        'BAJAJ-AUTO', 'BAJAJFINSV', 'BAJFINANCE', 'BHARTIARTL', 'BPCL',
-        'BRITANNIA', 'CIPLA', 'COALINDIA', 'DIVISLAB', 'DRREDDY',
-        'EICHERMOT', 'GRASIM', 'HCLTECH', 'HDFCBANK', 'HDFCLIFE',
-        'HEROMOTOCO', 'HINDALCO', 'HINDUNILVR', 'ICICIBANK', 'INDUSINDBK',
-        'INFY', 'ITC', 'JSWSTEEL', 'KOTAKBANK', 'LT',
-        'LTIM', 'M&M', 'MARUTI', 'NESTLEIND', 'NTPC',
-        'ONGC', 'POWERGRID', 'RELIANCE', 'SBILIFE', 'SBIN',
-        'SHRIRAMFIN', 'SUNPHARMA', 'TATACONSUM', 'TATAMOTORS', 'TATASTEEL',
-        'TCS', 'TECHM', 'TITAN', 'ULTRACEMCO', 'WIPRO'
-    ];
+        if (!closePrices || closePrices.length < 25) return null;
 
-    let calculatedData = []; 
-    let currentFilter = 'all';
-    let currentInterval = '15m';
-    let currentRange = '5d';
+        let idx = closePrices.length - 1;        while (idx >= 0 && closePrices[idx] == null) { idx--; }        if (idx < 20) return null;
 
-    window.onload = function() {
-        fetchAllStocksBulk();
-    };
+        const currentPrice = closePrices[idx];        const openPrice = openPrices[idx];        const highPrice = highPrices[idx];        const lowPrice = lowPrices[idx];        const currentVol = volumes[idx] || 0;                        const changePct = ((currentPrice - closePrices[0]) / closePrices[0]) * 100;
 
-    function changeTimeframe(interval, range) {
-        currentInterval = interval;
-        currentRange = range;
-        
-        document.getElementById('tf15m').className = 'btn' + (interval === '15m' ? ' active-tf' : '');
-        document.getElementById('tf1h').className = 'btn' + (interval === '1h' ? ' active-tf' : '');
-        document.getElementById('tf1d').className = 'btn' + (interval === '1d' ? ' active-tf' : '');
-        
-        fetchAllStocksBulk();
-    }
+        let totalVolSum = 0; let validVolCount = 0;        for(let v = idx - 5; v < idx; v++) {            if(volumes[v]) { totalVolSum += volumes[v]; validVolCount++; }        }        const avgVolume = validVolCount > 0 ? totalVolSum / validVolCount : 1;        const volumeRatio = currentVol / avgVolume;
 
-    async function fetchAllStocksBulk() {
-        const loading = document.getElementById('loadingText');
-        loading.style.display = 'block';
-        calculatedData = [];
-        
-        const proxyUrl = "https://api.allorigins.win/get?url=";
-        
-        try {
-            const promises = NIFTY_STOCKS.map(async (symbol) => {
-                try {
-                    const stockUrl = encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}.NS?range=${currentRange}&interval=${currentInterval}`);
-                    const response = await fetch(`${proxyUrl}${stockUrl}`);
-                    const proxyJson = await response.json();
-                    const json = JSON.parse(proxyJson.contents);
-                    
-                    const result = json.chart.result[0];
-                    const indicators = result.indicators.quote[0];
-                    const timestamps = result.timestamp;
-                    const closePrices = indicators.close;
-                    const openPrices = indicators.open;
-                    const highPrices = indicators.high;
-                    const lowPrices = indicators.low;
-                    const volumes = indicators.volume;
+        let ema9 = closePrices[0] || currentPrice;        const k = 2 / (9 + 1);        for (let i = 1; i <= idx; i++) {            if (closePrices[i] != null) ema9 = (closePrices[i] * k) + (ema9 * (1 - k));        }
 
-                    if (!closePrices || closePrices.length < 25) return;
+        let totalPriceVolume = 0; let totalVolume = 0;        let currentDay = new Date(timestamps[idx] * 1000).getDate();                for (let i = idx; i >= 0; i--) {            if (currentInterval === '15m') {                let checkDay = new Date(timestamps[i] * 1000).getDate();                if (checkDay !== currentDay) break;             }            if (closePrices[i] != null && volumes[i] != null && highPrices[i] != null && lowPrices[i] != null) {                let typPrice = (highPrices[i] + lowPrices[i] + closePrices[i]) / 3;                totalPriceVolume += typPrice * volumes[i];                totalVolume += volumes[i];            }        }        const vwapVal = totalVolume > 0 ? (totalPriceVolume / totalVolume) : currentPrice;
 
-                    let idx = closePrices.length - 1;
-                    while (idx >= 0 && closePrices[idx] == null) { idx--; }
-                    if (idx < 20) return;
+        let trSum = 0;        for (let i = idx - 9; i <= idx; i++) {            let h = highPrices[i], l = lowPrices[i], c_prev = closePrices[i - 1] || closePrices[i];            trSum += Math.max(h - l, Math.abs(h - c_prev), Math.abs(l - c_prev));        }        const realAtr = trSum / 10;
 
-                    const currentPrice = closePrices[idx];
-                    const openPrice = openPrices[idx];
-                    const highPrice = highPrices[idx];
-                    const lowPrice = lowPrices[idx];
-                    const currentVol = volumes[idx] || 0;
-                    
-                    // 🧮 वॉल्यूम एवरेज कैलकुलेशन
-                    let totalVolSum = 0;
-                    let validVolCount = 0;
-                    for(let v = idx - 5; v < idx; v++) {
-                        if(volumes[v]) { totalVolSum += volumes[v]; validVolCount++; }
-                    }
-                    const avgVolume = validVolCount > 0 ? totalVolSum / validVolCount : 1;
-                    const volumeRatio = currentVol / avgVolume;
+        let s_high = highPrices[idx-1] || currentPrice;        let s_low = lowPrices[idx-1] || currentPrice;        let s_close = closePrices[idx-1] || currentPrice;        const P = (s_high + s_low + s_close) / 3;        const R1 = (2 * P) - s_low;        const S1 = (2 * P) - s_high;
 
-                    // 🧮 9-EMA कैलकुलेशन
-                    let ema9 = closePrices[0] || currentPrice;
-                    const k = 2 / (9 + 1);
-                    for (let i = 1; i <= idx; i++) {
-                        if (closePrices[i] != null) ema9 = (closePrices[i] * k) + (ema9 * (1 - k));
-                    }
+        const distToR1 = ((R1 - currentPrice) / currentPrice) * 100;        const distToS1 = ((currentPrice - S1) / currentPrice) * 100;
 
-                    // 🧮 VWAP कैलकुलेशन
-                    let totalPriceVolume = 0;
-                    let totalVolume = 0;
-                    let currentDay = new Date(timestamps[idx] * 1000).getDate();
-                    
-                    for (let i = idx; i >= 0; i--) {
-                        if (currentInterval === '15m') {
-                            let checkDay = new Date(timestamps[i] * 1000).getDate();
-                            if (checkDay !== currentDay) break; 
-                        }
-                        if (closePrices[i] != null && volumes[i] != null && highPrices[i] != null && lowPrices[i] != null) {
-                            let typPrice = (highPrices[i] + lowPrices[i] + closePrices[i]) / 3;
-                            totalPriceVolume += typPrice * volumes[i];
-                            totalVolume += volumes[i];
-                        }
-                    }
-                    const vwapVal = totalVolume > 0 ? (totalPriceVolume / totalVolume) : currentPrice;
+        let srAlert = "रेंज के बीच में ट्रेड जारी"; let alertColor = "#8b949e";        if (distToR1 > 0 && distToR1 < 0.4) {            srAlert = "रेजिस्टेंस ब्रेकआउट होने वाला है! 🚀"; alertColor = "#f2c94c";        } else if (currentPrice >= R1) {            srAlert = "रेजिस्टेंस ब्रेकआउट कन्फर्म! 🔥"; alertColor = "#3fb950";        } else if (distToS1 > 0 && distToS1 < 0.4) {            srAlert = "सपोर्ट से बाउंस बैक मुमकिन 🛡️"; alertColor = "#f2c94c";        } else if (currentPrice <= S1) {            srAlert = "सपोर्ट ब्रेकdown हुआ ⚠️"; alertColor = "#f85149";        }
 
-                    // 🧮 ATR (वोलैटिलिटी) कैलकुलेशन
-                    let trSum = 0;
-                    for (let i = idx - 9; i <= idx; i++) {
-                        let h = highPrices[i], l = lowPrices[i], c_prev = closePrices[i - 1] || closePrices[i];
-                        trSum += Math.max(h - l, Math.abs(h - c_prev), Math.abs(l - c_prev));
-                    }
-                    const realAtr = trSum / 10;
+        let isBullish = false; let isBearish = false;        if (currentPrice > vwapVal && currentPrice > ema9) isBullish = true;        else if (currentPrice < vwapVal && currentPrice < ema9) isBearish = true;
 
-                    // 🧮 प्राइस एक्शन आधारित सपोर्ट और रेजिस्टेंस (पिवट पॉइंट्स लेवल्स)
-                    let s_high = highPrices[idx-1] || currentPrice;
-                    let s_low = lowPrices[idx-1] || currentPrice;
-                    let s_close = closePrices[idx-1] || currentPrice;
-                    const P = (s_high + s_low + s_close) / 3;
-                    const R1 = (2 * P) - s_low;
-                    const S1 = (2 * P) - s_high;
+        let higherHighsCount = 0; let lowerLowsCount = 0;        for(let h=idx-4; h<=idx; h++) {            if(closePrices[h] > closePrices[h-1]) higherHighsCount++;            if(closePrices[h] < closePrices[h-1]) lowerLowsCount++;        }        let historicalTrend = "साइडवेज कंसोलिडेशन";        if(higherHighsCount >= 3) historicalTrend = "मजबूत अपट्रेंड (हायर-हाई)";        if(lowerLowsCount >= 3) historicalTrend = "मजबूत डाउनट्रेंड (लोअर-लो)";
 
-                    // 🚨 ट्रेंड आधारित जोन मैनेजमेंट
-                    let zoneStatus = "साइडवेज / रेंज 🟡";
-                    let isBullish = false; let isBearish = false;
+        let candlePattern = "Normal Candle";        let entryAdvice = "अभी प्रतीक्षा करें (No Signal)";        let adviceColor = "#8b949e";                const bodySize = Math.abs(currentPrice - openPrice);        const totalSize = highPrice - lowPrice || 1;        const upperWick = highPrice - Math.max(openPrice, currentPrice);        const lowerWick = Math.min(openPrice, currentPrice) - lowPrice;
 
-                    if (currentPrice > vwapVal && currentPrice > ema9) {
-                        zoneStatus = "बुलिश ज़ोन 🟢"; isBullish = true;
-                    } else if (currentPrice < vwapVal && currentPrice < ema9) {
-                        zoneStatus = "बेयरिश ज़ोन 🔴"; isBearish = true;
-                    }
+        if (bodySize / totalSize < 0.1) {            candlePattern = "Doji ⏳";            entryAdvice = "अनिर्णय की स्थिति, नो एंट्री";        } else if (lowerWick > (bodySize * 2) && upperWick < (bodySize * 0.5)) {            candlePattern = "Hammer 🔨";            if(distToS1 < 1.5) {                entryAdvice = "सपोर्ट पर Hammer! लॉन्ग एंट्री लें 🟢";                adviceColor = "#3fb950";            } else {                entryAdvice = "Hammer बना, पर कन्फर्मेशन आवश्यक";            }        } else if (upperWick > (bodySize * 2) && lowerWick < (bodySize * 0.5)) {            candlePattern = "Shooting Star ☄️";            if(distToR1 < 1.5) {                entryAdvice = "रेजिस्टेंस पर रिजेक्शन! शॉर्ट सेल करें 🔴";                adviceColor = "#f85149";            } else {                entryAdvice = "शूटिंग स्टार, मंदी का संकेत";            }        } else if (isBullish && closePrices[idx] > openPrices[idx] && volumeRatio > 1.4) {            entryAdvice = "हाई वॉल्यूम ब्रेकआउट एंट्री! 🚀";            adviceColor = "#3fb950";        } else if (isBearish && closePrices[idx] < openPrices[idx] && volumeRatio > 1.4) {            entryAdvice = "पैनिक सेलिंग, सेफ एग्जिट सलाह";            adviceColor = "#f85149";        }
 
-                    // 🔄 **आगे-पीछे का चार्ट एनालिसिस (Historical History Check)**
-                    let higherHighsCount = 0;
-                    let lowerLowsCount = 0;
-                    for(let h=idx-4; h<=idx; h++) {
-                        if(closePrices[h] > closePrices[h-1]) higherHighsCount++;
-                        if(closePrices[h] < closePrices[h-1]) lowerLowsCount++;
-                    }
+        let zoneStatus = "SIDEWAYS 🟡";        if(isBullish) zoneStatus = "BULLISH 🟢";        if(isBearish) zoneStatus = "BEARISH 🔴";
 
-                    let historicalTrend = "कोई स्पष्ट दिशा नहीं";
-                    if(higherHighsCount >= 3) historicalTrend = "लगातार हायर-हाई (मजबूत बाइंग हिस्ट्री) 📈";
-                    if(lowerLowsCount >= 3) historicalTrend = "लगातार लोअर-लो (मजबूत सेलिंग हिस्ट्री) 📉";
+        let stopLoss, target;        if (isBullish) {            stopLoss = Math.min(currentPrice - (1.5 * realAtr), S1);            target = currentPrice + (Math.abs(currentPrice - stopLoss) * 2);        } else {            stopLoss = Math.max(currentPrice + (1.5 * realAtr), R1);            target = currentPrice - (Math.abs(stopLoss - currentPrice) * 2);        }
 
-                    // 🔮 **एडवान्स अनुमान प्रेडिक्शन इंजन (Prediction Logic)**
-                    let predictionText = "रेंज में फंसा रहेगा";
-                    if (isBullish) {
-                        if(currentPrice >= R1 * 0.995 && volumeRatio > 1.2) {
-                            predictionText = "रेजिस्टेंस ब्रेकआउट होने की संभावना! 🚀";
-                        } else if(higherHighsCount >= 3) {
-                            predictionText = "ट्रेंड जारी रहेगा (कंटिन्यूएशन)";
-                        } else {
-                            predictionText = "बाइंग प्रेशर है, पर बफर ज़ोन में है";
-                        }
-                    } else if (isBearish) {
-                        if(currentPrice <= S1 * 1.005 && volumeRatio > 1.2) {
-                            predictionText = "सपोर्ट ब्रेकडाउन का खतरा! ⚠️";
-                        } else if(lowerLowsCount >= 3) {
-                            predictionText = "गिरावट जारी रहने की संभावना";
-                        } else {
-                            predictionText = "सेलिंग प्रेशर है, पर कंसोलिडेशन मुमकिन";
-                        }
-                    } else {
-                        if(currentPrice <= S1 * 1.01) predictionText = "सपोर्ट से बाउंस बैक कर सकता है 📈";
-                        if(currentPrice >= R1 * 0.99) predictionText = "रेजिस्टेंस से रिजेक्शन का खतरा 📉";
-                    }
+        let score = isBullish ? (currentPrice - vwapVal) * volumeRatio : (vwapVal - currentPrice) * volumeRatio;
 
-                    // 🚨 सुधरा हुआ सटीक ऑर्डर फ्लो एनालिसिस लॉजिक
-                    const candleRange = highPrice - lowPrice || 1;
-                    let pressureText = "";
-                    if (isBullish) {
-                        const bullStrength = Math.round(((currentPrice - openPrice) / candleRange) * 100);
-                        pressureText = `बायर्स हावी (${Math.max(50, Math.min(100, bullStrength > 0 ? bullStrength : 55))}%)`;
-                    } else if (isBearish) {
-                        const bearStrength = Math.round(((openPrice - currentPrice) / candleRange) * 100);
-                        pressureText = `सेलर्स हावी (${Math.max(50, Math.min(100, bearStrength > 0 ? bearStrength : 60))}%)`;
-                    } else {
-                        const neutralPct = Math.round(((currentPrice - lowPrice) / candleRange) * 100);
-                        pressureText = neutralPct > 50 ? `बायर्स सक्रिय (${neutralPct}%)` : `सेलर्स सक्रिय (${100 - neutralPct}%)`;
-                    }
+        return {            ticker: symbol, price: currentPrice, change: changePct, volume_up: volumeRatio.toFixed(1),            support: S1, resistance: R1, entry: currentPrice, target: target, sl: stopLoss, sDist: distToS1.toFixed(1), rDist: distToR1.toFixed(1),            srAlert: srAlert, alertColor: alertColor, zone: zoneStatus, score: score, isBullish: isBullish, isBearish: isBearish,            histTrend: historicalTrend, pattern: candlePattern, advice: entryAdvice, adviceColor: adviceColor        };    }
 
-                    // 🕯️ कैंडलस्टिक पैटर्न डिटेक्टर
-                    let candlePattern = "Normal Candle";
-                    const bodySize = Math.abs(currentPrice - openPrice);
-                    const totalSize = highPrice - lowPrice || 1;
-                    const upperWick = highPrice - Math.max(openPrice, currentPrice);
-                    const lowerWick = Math.min(openPrice, currentPrice) - lowPrice;
+    async function fetchAllStocksBulk() {        const loading = document.getElementById('loadingText');        loading.style.display = 'block';        calculatedData = [];        const proxyUrl = "https://api.allorigins.win/get?url=";                try {            const promises = NIFTY_STOCKS.map(async (symbol) => {                try {                    const stockUrl = encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}.NS?range=${currentRange}&interval=${currentInterval}`);                    const response = await fetch(`${proxyUrl}${stockUrl}`);                    const proxyJson = await response.json();                    const json = JSON.parse(proxyJson.contents);                    const dataObj = processStockJson(json, symbol);                    if(dataObj) calculatedData.push(dataObj);                } catch (err) { }            });            await Promise.all(promises);                    } catch (globalErr) { }
+        loading.style.display = 'none';        applyHtmlFilter();        renderLeaderboards();    }
 
-                    if (bodySize / totalSize < 0.1) {
-                        candlePattern = "Doji ⏳ (अनिर्णय स्थिति)";
-                    } else if (lowerWick > (bodySize * 2) && upperWick < (bodySize * 0.5)) {
-                        candlePattern = "Hammer 🔨 (रिवर्सल संकेत)";
-                    } else if (upperWick > (bodySize * 2) && lowerWick < (bodySize * 0.5)) {
-                        candlePattern = "Shooting Star ☄️ (बेयरिश संकेत)";
-                    }
+    // 🔍 फिक्स्ड यूनिवर्सल सर्च इंजन फ़ंक्शन    async function searchStock() {        const searchInput = document.getElementById('customTicker').value.trim().toUpperCase();        if (!searchInput) { applyHtmlFilter(); renderLeaderboards(); return; }                // 1. अगर स्टॉक पहले से कैलकुलेटेड लिस्ट में उपलब्ध है        const localFiltered = calculatedData.filter(item => item.ticker.includes(searchInput));        if (localFiltered.length > 0) {            renderTable(localFiltered);            return;        }                // 2. अगर बाहर का कोई भी नया NSE स्टॉक सर्च किया गया है        const loading = document.getElementById('loadingText');        loading.innerText = `NSE स्टॉक "${searchInput}" का लाइव डेटा सर्च किया जा रहा है...`;        loading.style.display = 'block';                const proxyUrl = "https://api.allorigins.win/get?url=";        try {            const stockUrl = encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${searchInput}.NS?range=${currentRange}&interval=${currentInterval}`);            const response = await fetch(`${proxyUrl}${stockUrl}`);            const proxyJson = await response.json();            const json = JSON.parse(proxyJson.contents);            const dataObj = processStockJson(json, searchInput);                        loading.style.display = 'none';            loading.innerText = "याहू फाइनेंस से ऐतिहासिक कैंडल और मोमेंटम डेटा कैलकुलेट हो रहा है...";                        if (dataObj) {                // नया स्टॉक मुख्य डेटा लिस्ट में भी जोड़ दिया ताकि लीडरबोर्ड अपडेट हो सके                if(!calculatedData.some(e => e.ticker === dataObj.ticker)) {                    calculatedData.push(dataObj);                }                renderTable([dataObj]);                renderLeaderboards();            } else {                document.getElementById('scannerBody').innerHTML = `<tr><td colspan="7" style="text-align: center; color: #f2c94c; padding: 30px 0;">स्टॉक सिम्बॉल "${searchInput}" का पर्याप्त डेटा नहीं मिला। कृपया सही NSE सिम्बॉल लिखें।</td></tr>`;            }        } catch (e) {            loading.style.display = 'none';            document.getElementById('scannerBody').innerHTML = `<tr><td colspan="7" style="text-align: center; color: #f85149; padding: 30px 0;">स्टॉक "${searchInput}" को खोजने में त्रुटि हुई। कृपया जांचें कि सिम्बॉल सही है या नहीं।</td></tr>`;        }    }
 
-                    let entryLevel = currentPrice;
-                    let stopLoss, target;
+    function setFilter(filterType) {        currentFilter = filterType;        document.getElementById('customTicker').value = '';         document.getElementById('btnAll').className = 'btn' + (filterType === 'all' ? ' active-all' : '');        document.getElementById('btnBullish').className = 'btn' + (filterType === 'bullish' ? ' active-bullish' : '');        document.getElementById('btnBearish').className = 'btn' + (filterType === 'bearish' ? ' active-bearish' : '');        applyHtmlFilter();    }
 
-                    if (isBullish) {
-                        stopLoss = Math.min(currentPrice - (1.5 * realAtr), S1);
-                        target = currentPrice + (Math.abs(currentPrice - stopLoss) * 2);
-                    } else if (isBearish) {
-                        stopLoss = Math.max(currentPrice + (1.5 * realAtr), R1);
-                        target = currentPrice - (Math.abs(stopLoss - currentPrice) * 2);
-                    } else {
-                        stopLoss = currentPrice - (1.2 * realAtr);
-                        target = currentPrice + (1.2 * realAtr);
-                    }
+    function applyHtmlFilter() {        let displayData = [...calculatedData];        if (currentFilter === 'bullish') {            displayData = displayData.filter(item => item.isBullish).sort((a, b) => b.score - a.score);        } else if (currentFilter === 'bearish') {            displayData = displayData.filter(item => item.isBearish).sort((a, b) => b.score - a.score);        }        renderTable(displayData);    }
 
-                    let score = isBullish ? (currentPrice - vwapVal) * volumeRatio : (isBearish ? (vwapVal - currentPrice) * volumeRatio : 0);
+    function renderTable(dataList) {        const tbody = document.getElementById('scannerBody');        tbody.innerHTML = '';        if (dataList.length === 0) {            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #8b949e; padding: 30px 0;">कोई डेटा उपलब्ध नहीं है। वीकेंड/छुट्टी के दिन 'Daily' मोड चुनें।</td></tr>`;            return;        }        dataList.forEach(item => {            let badge = `<span class="badge-range">${item.zone}</span>`;            if(item.isBullish) badge = `<span class="badge-buy">${item.zone}</span>`;            if(item.isBearish) badge = `<span class="badge-sell">${item.zone}</span>`;
 
-                    calculatedData.push({
-                        ticker: symbol, price: currentPrice, volume_up: volumeRatio.toFixed(1),
-                        support: S1, resistance: R1, entry: entryLevel, target: target, sl: stopLoss,
-                        order_flow: zoneStatus, score: score, isBullish: isBullish, isBearish: isBearish,
-                        pressure: pressureText, histTrend: historicalTrend, prediction: predictionText, pattern: candlePattern
-                    });
-                } catch (err) { console.log(err); }
-            });
+            const row = `                <tr>                    <td><strong>${item.ticker}</strong><br><span style="font-size:10px; color:${item.change >= 0 ? '#3fb950' : '#f85149'}">${item.change >= 0 ? '+' : ''}${item.change.toFixed(2)}%</span></td>                    <td>                        ${badge}<br>                        <span style="font-size:10px; font-weight:bold; color:${item.alertColor}; margin-top:4px; display:block;">${item.srAlert}</span>                    </td>                    <td>₹${item.price.toFixed(2)}<br><span style="color: #f2c94c; font-size:11px;">${item.volume_up}x Vol</span></td>                    <td><span style="color:#f85149; font-size:11px;">R: ₹${item.resistance.toFixed(1)} (${item.rDist}% दूर)</span><br><span style="color:#3fb950; font-size:11px;">S: ₹${item.support.toFixed(1)} (${item.sDist}% दूर)</span></td>                    <td class="text-entry">₹${item.entry.toFixed(2)}</td>                    <td><span class="text-target">T: ₹${item.target.toFixed(2)}</span><br><span class="text-sl">SL: ₹${item.sl.toFixed(2)}</span></td>                    <td>                        <div style="font-size:11px; display:flex; flex-direction:column; gap:2px;">                            <span style="color: ${item.adviceColor}; font-weight: bold;">📢 सलाह: ${item.advice}</span>                            <span style="color: #c9d1d9;">⏱️ ट्रेंड: ${item.histTrend}</span>                            <span style="color: #f2c94c;">🕯️ कैंडल: ${item.pattern}</span>                        </div>                    </td>                </tr>            `;            tbody.innerHTML += row;        });    }
 
-            await Promise.all(promises);
-            
-        } catch (globalErr) {
-            console.log(globalErr);
-        }
+    function renderLeaderboards() {        if(calculatedData.length === 0) return;                const gainers = [...calculatedData].sort((a, b) => b.change - a.change).slice(0, 5);        const gBody = document.getElementById('gainerBody'); gBody.innerHTML = '';        gainers.forEach(i => gBody.innerHTML += `<div class="lead-item"><strong>${i.ticker}</strong> <span>₹${i.price.toFixed(2)} (<span style="color:#3fb950">+${i.change.toFixed(2)}%</span>)</span></div>`);
 
-        loading.style.display = 'none';
-        applyHtmlFilter();
-    }
+        const losers = [...calculatedData].sort((a, b) => a.change - b.change).slice(0, 5);        const lBody = document.getElementById('loserBody'); lBody.innerHTML = '';        losers.forEach(i => lBody.innerHTML += `<div class="lead-item"><strong>${i.ticker}</strong> <span>₹${i.price.toFixed(2)} (<span style="color:#f85149">${i.change.toFixed(2)}%</span>)</span></div>`);
 
-    function setFilter(filterType) {
-        currentFilter = filterType;
-        document.getElementById('customTicker').value = ''; 
-        document.getElementById('btnAll').className = 'btn' + (filterType === 'all' ? ' active-all' : '');
-        document.getElementById('btnBullish').className = 'btn' + (filterType === 'bullish' ? ' active-bullish' : '');
-        document.getElementById('btnBearish').className = 'btn' + (filterType === 'bearish' ? ' active-bearish' : '');
-        applyHtmlFilter();
-    }
-
-    function applyHtmlFilter() {
-        let displayData = [...calculatedData];
-        if (currentFilter === 'bullish') {
-            displayData = displayData.filter(item => item.isBullish).sort((a, b) => b.score - a.score).slice(0, 10);
-        } else if (currentFilter === 'bearish') {
-            displayData = displayData.filter(item => item.isBearish).sort((a, b) => b.score - a.score).slice(0, 10);
-        }
-        renderTable(displayData);
-    }
-
-    async function searchStock() {
-        const searchInput = document.getElementById('customTicker').value.trim().toUpperCase();
-        if (!searchInput) { alert('कृपया स्टॉक का नाम लिखें!'); return; }
-        document.getElementById('btnAll').className = 'btn';
-        document.getElementById('btnBullish').className = 'btn';
-        document.getElementById('btnBearish').className = 'btn';
-        const filtered = calculatedData.filter(item => item.ticker === searchInput);
-        if (filtered.length > 0) {
-            renderTable(filtered);
-        } else {
-            document.getElementById('scannerBody').innerHTML = `<tr><td colspan="10" style="text-align: center; color: #e3b341; padding: 30px 0;">स्टॉक "${searchInput}" लिस्ट में नहीं मिला।</td></tr>`;
-        }
-    }
-
-    function renderTable(dataList) {
-        const tbody = document.getElementById('scannerBody');
-        tbody.innerHTML = '';
-        if (dataList.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: #8b949e; padding: 30px 0;">कोई स्टॉक उपलब्ध नहीं है।</td></tr>`;
-            return;
-        }
-        dataList.forEach(item => {
-            let badge = `<span class="badge-range">SIDEWAYS</span>`;
-            if(item.isBullish) badge = `<span class="badge-buy">BULLISH</span>`;
-            if(item.isBearish) badge = `<span class="badge-sell">BEARISH</span>`;
-
-            const row = `
-                <tr>
-                    <td><strong>${item.ticker}</strong></td>
-                    <td>${badge}</td>
-                    <td>₹${item.price.toFixed(2)}</td>
-                    <td style="color: #e3b341; font-weight: 500;">${item.volume_up}x</td>
-                    <td>₹${item.support.toFixed(2)}</td>
-                    <td>₹${item.resistance.toFixed(2)}</td>
-                    <td class="text-entry">₹${item.entry.toFixed(2)}</td>
-                    <td class="text-target">₹${item.target.toFixed(2)}</td>
-                    <td class="text-sl">₹${item.sl.toFixed(2)}</td>
-                    <td>
-                        <div class="analysis-block">
-                            <span style="color: #e3b341; font-weight: 500;">⏱️ ${item.histTrend}</span>
-                            <span style="color: #c9d1d9;">📊 स्थिति: ${item.pressure}</span>
-                            <div class="predict-badge">🔮 अनुमान: ${item.prediction}</div>
-                            <div class="pattern-badge">🕯️ कैंडल: ${item.pattern}</div>
-                        </div>
-                    </td>
-                </tr>
-            `;
-            tbody.innerHTML += row;
-        });
-    }
-</script>
-
-</body>
-</html>
+        const highVol = [...calculatedData].sort((a, b) => b.volume_up - a.volume_up).slice(0, 5);        const vBody = document.getElementById('volumeBody'); vBody.innerHTML = '';        highVol.forEach(i => vBody.innerHTML += `<div class="lead-item"><strong>${i.ticker}</strong> <span>₹${i.price.toFixed(2)} <span style="color:#f2c94c; font-weight:bold;">${i.volume_up}x</span></span></div>`);    }</script></body></html>
