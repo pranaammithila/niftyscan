@@ -3,181 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nifty 50 Technical Screener (EMA & RSI)</title>
+    <title>Trending Stocks - Bullish & Bearish Dashboard</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #0f172a; color: #f8fafc; padding: 20px; }
-        .container { max-width: 1100px; margin: 0 auto; }
+        .container { max-width: 1200px; margin: 0 auto; }
         
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #334155; }
-        h1 { font-size: 20px; color: #38bdf8; }
+        h1 { font-size: 22px; color: #38bdf8; }
+        .timestamp { font-size: 13px; color: #94a3b8; }
         
-        .btn-scan { background-color: #0284c7; color: white; border: none; padding: 10px 20px; font-weight: bold; border-radius: 6px; cursor: pointer; }
-        .btn-scan:hover { background-color: #0369a1; }
+        .section-title { font-size: 16px; margin: 20px 0 10px 0; display: flex; align-items: center; gap: 8px; }
+        .title-gainer { color: #34d399; }
+        .title-loser { color: #f87171; }
         
-        .status-box { font-size: 14px; color: #94a3b8; margin-bottom: 15px; }
-        
-        table { width: 100%; border-collapse: collapse; background-color: #1e293b; border-radius: 8px; overflow: hidden; }
-        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #334155; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; background-color: #1e293b; border-radius: 8px; overflow: hidden; margin-bottom: 30px; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #334155; font-size: 13px; }
         th { background-color: #334155; color: #94a3b8; font-weight: 600; }
         
-        .badge-bullish { background-color: #064e3b; color: #34d399; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
-        .buy-price { color: #38bdf8; font-weight: bold; }
-        .sl-price { color: #f87171; font-weight: bold; }
-        .target-price { color: #34d399; font-weight: bold; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; display: inline-block; }
+        .badge-bullish { background-color: #064e3b; color: #34d399; }
+        .badge-bearish { background-color: #7f1d1d; color: #f87171; }
+        .badge-neutral { background-color: #334155; color: #cbd5e1; }
+        
+        .price-green { color: #34d399; font-weight: bold; }
+        .price-red { color: #f87171; font-weight: bold; }
+        .price-blue { color: #38bdf8; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <h1>Nifty 50 EMA & RSI Bullish Scanner</h1>
-        <button class="btn-scan" onclick="runScanner()">🚀 Scan Live Signals</button>
+        <h1>Market Screener - Live Signals</h1>
+        <div class="timestamp" id="tradeTime">Date: --</div>
     </header>
 
-    <div class="status-box" id="status">स्थिति: 'Scan Live Signals' पर क्लिक करके स्कैन शुरू करें।</div>
-
+    <div class="section-title title-gainer">🚀 Top Gainers (Bullish Opportunities)</div>
     <table>
         <thead>
             <tr>
-                <th>Stock / Index</th>
+                <th>Stock Name</th>
                 <th>Price (CMP)</th>
-                <th>Signal Type</th>
+                <th>Change (%)</th>
+                <th>Rating</th>
                 <th>Buy Entry (Above High)</th>
-                <th>Stoploss (SL)</th>
+                <th>Stoploss (Low)</th>
                 <th>Target (1:2)</th>
             </tr>
         </thead>
-        <tbody id="scanResults">
+        <tbody id="gainersTable"></tbody>
+    </table>
+
+    <div class="section-title title-loser">🔻 Top Losers (Bearish Trend)</div>
+    <table>
+        <thead>
             <tr>
-                <td colspan="6" style="text-align: center; color: #64748b;">स्कैनर अभी बंद है। ऊपर बटन पर क्लिक करें।</td>
+                <th>Stock Name</th>
+                <th>Price (CMP)</th>
+                <th>Change (%)</th>
+                <th>Rating</th>
+                <th>Sell Entry (Below Low)</th>
+                <th>Stoploss (High)</th>
+                <th>Target (1:2)</th>
             </tr>
-        </tbody>
+        </thead>
+        <tbody id="losersTable"></tbody>
     </table>
 </div>
 
 <script>
-    const stockList = [
-        { name: 'NIFTY 50', symbol: '^NSEI' },
-        { name: 'RELIANCE', symbol: 'RELIANCE.NS' },
-        { name: 'TCS', symbol: 'TCS.NS' },
-        { name: 'INFY', symbol: 'INFY.NS' },
-        { name: 'HDFC BANK', symbol: 'HDFCBANK.NS' },
-        { name: 'ICICI BANK', symbol: 'ICICIBANK.NS' },
-        { name: 'TATAMOTORS', symbol: 'TATAMOTORS.NS' },
-        { name: 'SBIN', symbol: 'SBIN.NS' },
-        { name: 'BHARTIARTL', symbol: 'BHARTIARTL.NS' }
-    ];
+    // आपका JSON डेटा यहाँ पास किया गया है
+    const marketData = {
+      "trending_stocks": {
+        "top_gainers": [
+          { "company_name": "Tata Consultancy Services", "price": "2407", "percent_change": "4.85", "high": "2409.20", "low": "2323", "overall_rating": "Moderately Bullish", "date": "2026-07-28", "time": "06:13:02" },
+          { "company_name": "Tech Mahindra", "price": "1629.20", "percent_change": "3.44", "high": "1634", "low": "1595.80", "overall_rating": "Bullish" },
+          { "company_name": "Eternal", "price": "305.30", "percent_change": "3.19", "high": "306", "low": "294.20", "overall_rating": "Bullish" },
+          { "company_name": "HCL Technologies", "price": "1335.90", "percent_change": "3.09", "high": "1342", "low": "1301", "overall_rating": "Moderately Bullish" },
+          { "company_name": "Nestle India", "price": "1489.40", "percent_change": "2.99", "high": "1491.40", "low": "1448.50", "overall_rating": "Bullish" }
+        ],
+        "top_losers": [
+          { "company_name": "Hindustan Unilever", "price": "2068.20", "percent_change": "-4.89", "high": "2213", "low": "2060", "overall_rating": "Bearish" },
+          { "company_name": "Bharat Electronics", "price": "395.30", "percent_change": "-2.91", "high": "406.15", "low": "392.10", "overall_rating": "Bearish" },
+          { "company_name": "Coal India", "price": "415.70", "percent_change": "-2.76", "high": "423.60", "low": "413.60", "overall_rating": "Bearish" }
+        ]
+      }
+    };
 
-    async function fetchHistoricalData(symbol) {
-        // Fetch last 15 days data for calculating Moving Averages
-        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1mo`;
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-        
-        try {
-            const response = await fetch(proxyUrl);
-            const data = await response.json();
-            const result = JSON.parse(data.contents).chart.result[0];
-            const quotes = result.indicators.quote[0];
-            
-            return {
-                close: quotes.close.filter(val => val !== null),
-                high: quotes.high.filter(val => val !== null),
-                low: quotes.low.filter(val => val !== null)
-            };
-        } catch (error) {
-            console.error("Error fetching " + symbol, error);
-            return null;
-        }
-    }
+    function renderDashboard() {
+        const gainers = marketData.trending_stocks.top_gainers;
+        const losers = marketData.trending_stocks.top_losers;
 
-    // Simple Moving Average / EMA logic helper
-    function calculateSMA(data, period) {
-        let slice = data.slice(-period);
-        let sum = slice.reduce((acc, val) => acc + val, 0);
-        return sum / period;
-    }
+        // Set Timestamp
+        document.getElementById('tradeTime').innerText = `Data Time: ${gainers[0].date} | ${gainers[0].time}`;
 
-    function checkTechnicalBullish(data) {
-        const { close, high, low } = data;
-        const len = close.length - 1;
-        const currentClose = close[len];
-        const currentHigh = high[len];
-        const currentLow = low[len];
-
-        // 5-Period Short MA & 15-Period Long MA
-        const maShort = calculateSMA(close, 5);
-        const maLong = calculateSMA(close, 15);
-        const prevMaShort = calculateSMA(close.slice(0, -1), 5);
-        const prevMaLong = calculateSMA(close.slice(0, -1), 15);
-
-        let signalName = null;
-
-        // Condition 1: Moving Average Crossover (Bullish Trend)
-        if (prevMaShort <= prevMaLong && maShort > maLong) {
-            signalName = "MA Bullish Crossover";
-        } 
-        // Condition 2: Strong Momentum Green Candle above MA
-        else if (currentClose > maShort && currentClose > close[len - 1]) {
-            signalName = "Bullish Momentum";
-        }
-
-        if (signalName) {
-            const entry = currentHigh * 1.001; // Buy 0.1% above candle high
-            const sl = currentLow * 0.999;     // Stoploss 0.1% below candle low
+        // Render Top Gainers (Bullish Buy Entry Setup)
+        const gTable = document.getElementById('gainersTable');
+        gTable.innerHTML = '';
+        gainers.forEach(stock => {
+            const high = parseFloat(stock.high);
+            const low = parseFloat(stock.low);
+            const entry = high + 0.50; // High के ऊपर Buy Entry
+            const sl = low;            // Low पर Stoploss
             const risk = entry - sl;
-            const target = entry + (risk * 2);  // 1:2 Risk-Reward Ratio
+            const target = entry + (risk * 2); // 1:2 Risk-Reward
 
-            return {
-                signal: signalName,
-                cmp: currentClose,
-                entry: entry,
-                sl: sl,
-                target: target
-            };
-        }
+            gTable.innerHTML += `
+                <tr>
+                    <td><strong>${stock.company_name}</strong></td>
+                    <td>₹${parseFloat(stock.price).toFixed(2)}</td>
+                    <td class="price-green">+${stock.percent_change}%</td>
+                    <td><span class="badge badge-bullish">${stock.overall_rating}</span></td>
+                    <td class="price-blue">₹${entry.toFixed(2)}</td>
+                    <td class="price-red">₹${sl.toFixed(2)}</td>
+                    <td class="price-green">₹${target.toFixed(2)}</td>
+                </tr>
+            `;
+        });
 
-        return null;
+        // Render Top Losers (Bearish Sell Entry Setup)
+        const lTable = document.getElementById('losersTable');
+        lTable.innerHTML = '';
+        losers.forEach(stock => {
+            const high = parseFloat(stock.high);
+            const low = parseFloat(stock.low);
+            const entry = low - 0.50;  // Low के नीचे Sell Entry
+            const sl = high;           // High पर Stoploss
+            const risk = sl - entry;
+            const target = entry - (risk * 2); // 1:2 Target Downside
+
+            lTable.innerHTML += `
+                <tr>
+                    <td><strong>${stock.company_name}</strong></td>
+                    <td>₹${parseFloat(stock.price).toFixed(2)}</td>
+                    <td class="price-red">${stock.percent_change}%</td>
+                    <td><span class="badge badge-bearish">${stock.overall_rating}</span></td>
+                    <td class="price-blue">₹${entry.toFixed(2)}</td>
+                    <td class="price-red">₹${sl.toFixed(2)}</td>
+                    <td class="price-green">₹${target.toFixed(2)}</td>
+                </tr>
+            `;
+        });
     }
 
-    async function runScanner() {
-        const statusEl = document.getElementById('status');
-        const resultsEl = document.getElementById('scanResults');
-        
-        statusEl.innerText = "स्कैनिंग चालू है... मार्केट डेटा का विश्लेषण हो रहा है...";
-        resultsEl.innerHTML = "";
-
-        let count = 0;
-
-        for (let stock of stockList) {
-            statusEl.innerText = `चेक कर रहे हैं: ${stock.name}...`;
-            const historicalData = await fetchHistoricalData(stock.symbol);
-
-            if (historicalData) {
-                const alertSignal = checkTechnicalBullish(historicalData);
-                if (alertSignal) {
-                    count++;
-                    resultsEl.innerHTML += `
-                        <tr>
-                            <td><strong>${stock.name}</strong></td>
-                            <td>₹${alertSignal.cmp.toFixed(2)}</td>
-                            <td><span class="badge-bullish">${alertSignal.signal}</span></td>
-                            <td class="buy-price">₹${alertSignal.entry.toFixed(2)}</td>
-                            <td class="sl-price">₹${alertSignal.sl.toFixed(2)}</td>
-                            <td class="target-price">₹${alertSignal.target.toFixed(2)}</td>
-                        </tr>
-                    `;
-                }
-            }
-        }
-
-        if (count === 0) {
-            resultsEl.innerHTML = `<tr><td colspan="6" style="text-align:center;">फिलहाल किसी स्टॉक में मजबूत बुलिश सेटअप नहीं मिला है। कुछ देर बाद दोबारा स्कैन करें।</td></tr>`;
-            statusEl.innerText = "स्कैन पूरा हुआ! कोई नया बुलिश सिग्नल नहीं मिला।";
-        } else {
-            statusEl.innerText = `स्कैन पूरा हुआ! कुल ${count} बुलिश सिग्नल्स मिले।`;
-        }
-    }
+    renderDashboard();
 </script>
 
 </body>
