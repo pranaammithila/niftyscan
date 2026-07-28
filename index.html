@@ -3,344 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nifty 50 Bullish Buy Signal & Calculator</title>
+    <title>Live Nifty 50 Bullish Scanner (Free API)</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: #121722;
-            color: #d1d4dc;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #2a2e39;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
-        }
-
-        h1 {
-            font-size: 22px;
-            color: #ffffff;
-        }
-
-        .badge {
-            background-color: #089981;
-            color: #fff;
-            padding: 4px 12px;
-            border-radius: 4px;
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        .dashboard {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 20px;
-        }
-
-        @media (max-width: 768px) {
-            .dashboard {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .card {
-            background-color: #1e222d;
-            border-radius: 8px;
-            padding: 20px;
-            border: 1px solid #2a2e39;
-        }
-
-        .chart-area {
-            position: relative;
-            height: 380px;
-            border-left: 2px solid #434651;
-            border-bottom: 2px solid #434651;
-            margin-top: 20px;
-            display: flex;
-            align-items: flex-end;
-            justify-content: space-around;
-            padding: 0 20px;
-        }
-
-        /* Candlestick Styling */
-        .candle {
-            width: 30px;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .wick {
-            width: 2px;
-            background-color: #d1d4dc;
-        }
-
-        .body {
-            width: 100%;
-            border-radius: 2px;
-        }
-
-        .bullish .body { background-color: #089981; }
-        .bullish .wick { background-color: #089981; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+        body { background-color: #111827; color: #f3f4f6; padding: 20px; }
+        .container { max-width: 1100px; margin: 0 auto; }
         
-        .bearish .body { background-color: #f23645; }
-        .bearish .wick { background-color: #f23645; }
-
-        /* Trade Signal Lines */
-        .signal-line {
-            position: absolute;
-            width: 100%;
-            border-dasharray: 4;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 12px;
-            font-weight: bold;
-            padding: 0 10px;
-        }
-
-        .line-target {
-            top: 20%;
-            border-top: 2px dashed #089981;
-            color: #089981;
-        }
-
-        .line-entry {
-            top: 45%;
-            border-top: 2px dashed #2962ff;
-            color: #2962ff;
-        }
-
-        .line-stoploss {
-            top: 75%;
-            border-top: 2px dashed #f23645;
-            color: #f23645;
-        }
-
-        /* Form Controls */
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            font-size: 13px;
-            margin-bottom: 5px;
-            color: #787b86;
-        }
-
-        input {
-            width: 100%;
-            padding: 10px;
-            background-color: #131722;
-            border: 1px solid #363a45;
-            border-radius: 4px;
-            color: #fff;
-            font-size: 14px;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: #2962ff;
-        }
-
-        button {
-            width: 100%;
-            padding: 12px;
-            background-color: #2962ff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        button:hover {
-            background-color: #1e53e5;
-        }
-
-        .result-box {
-            margin-top: 15px;
-            padding: 12px;
-            background-color: #131722;
-            border-radius: 4px;
-        }
-
-        .result-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-
-        .result-row:last-child {
-            margin-bottom: 0;
-        }
-
-        .text-green { color: #089981; font-weight: bold; }
-        .text-red { color: #f23645; font-weight: bold; }
-        .text-blue { color: #2962ff; font-weight: bold; }
-
-        .pattern-tag {
-            position: absolute;
-            bottom: -30px;
-            font-size: 11px;
-            color: #089981;
-            background: rgba(8, 153, 129, 0.1);
-            padding: 2px 5px;
-            border-radius: 3px;
-            white-space: nowrap;
-        }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #374151; }
+        h1 { font-size: 20px; color: #60a5fa; }
+        
+        .btn-scan { background-color: #2563eb; color: white; border: none; padding: 10px 20px; font-weight: bold; border-radius: 6px; cursor: pointer; }
+        .btn-scan:hover { background-color: #1d4ed8; }
+        
+        .status-box { font-size: 14px; color: #9ca3af; margin-bottom: 15px; }
+        
+        table { width: 100%; border-collapse: collapse; background-color: #1f2937; border-radius: 8px; overflow: hidden; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #374151; font-size: 14px; }
+        th { background-color: #374151; color: #9ca3af; font-weight: 600; }
+        
+        .badge-bullish { background-color: #065f46; color: #34d399; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .buy-price { color: #60a5fa; font-weight: bold; }
+        .sl-price { color: #f87171; font-weight: bold; }
+        .target-price { color: #34d399; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <h1>Nifty 50 - Bullish Entry Signal Simulation</h1>
-        <span class="badge">BULLISH REVERSAL DETECTED</span>
+        <h1>Nifty 50 Live Bullish Pattern Scanner</h1>
+        <button class="btn-scan" onclick="runScanner()">🚀 Scan Market Now</button>
     </header>
 
-    <div class="dashboard">
-        <!-- Chart Section -->
-        <div class="card">
-            <h3>Chart Analysis (Hammer Pattern Signal)</h3>
-            <div class="chart-area" id="chart">
-                <!-- Target, Entry & Stoploss Lines -->
-                <div class="signal-line line-target">
-                    <span>TARGET (1:2): <span id="lblTarget">24,300</span></span>
-                    <span>+100 PTS</span>
-                </div>
-                <div class="signal-line line-entry">
-                    <span>BUY ENTRY: <span id="lblEntry">24,200</span></span>
-                    <span>BUY ABOVE HIGH</span>
-                </div>
-                <div class="signal-line line-stoploss">
-                    <span>STOPLOSS: <span id="lblSL">24,150</span></span>
-                    <span>-50 PTS</span>
-                </div>
+    <div class="status-box" id="status">स्थिति: 'Scan Market' बटन पर क्लिक करें।</div>
 
-                <!-- Simulated Candles -->
-                <!-- Candle 1: Red -->
-                <div class="candle bearish">
-                    <div class="wick" style="height: 15px;"></div>
-                    <div class="body" style="height: 80px;"></div>
-                    <div class="wick" style="height: 10px;"></div>
-                </div>
-                <!-- Candle 2: Red -->
-                <div class="candle bearish">
-                    <div class="wick" style="height: 10px;"></div>
-                    <div class="body" style="height: 60px;"></div>
-                    <div class="wick" style="height: 15px;"></div>
-                </div>
-                <!-- Candle 3: Bullish Hammer (Trigger Candle) -->
-                <div class="candle bullish">
-                    <div class="wick" style="height: 10px;"></div>
-                    <div class="body" style="height: 20px;"></div>
-                    <div class="wick" style="height: 70px;"></div> <!-- Long lower wick -->
-                    <span class="pattern-tag">Bullish Hammer</span>
-                </div>
-                <!-- Candle 4: Entry Confirmation Candle -->
-                <div class="candle bullish" style="opacity: 0.5;">
-                    <div class="wick" style="height: 20px;"></div>
-                    <div class="body" style="height: 50px;"></div>
-                    <div class="wick" style="height: 10px;"></div>
-                    <span class="pattern-tag" style="color:#2962ff; background:rgba(41, 98, 255, 0.1);">Entry Zone</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Calculator Section -->
-        <div class="card">
-            <h3>Nifty Risk-Reward Calculator</h3>
-            <br>
-            <div class="form-group">
-                <label>Bullish Candle High (Buy Entry Price)</label>
-                <input type="number" id="entryPrice" value="24200">
-            </div>
-            <div class="form-group">
-                <label>Bullish Candle Low (Stoploss Price)</label>
-                <input type="number" id="slPrice" value="24150">
-            </div>
-            <div class="form-group">
-                <label>Nifty Lot Quantity (1 Lot = 25 Qty)</label>
-                <input type="number" id="quantity" value="25">
-            </div>
-
-            <button onclick="calculateTrade()">Calculate Target & Risk</button>
-
-            <div class="result-box">
-                <div class="result-row">
-                    <span>Buy Entry:</span>
-                    <span id="resEntry" class="text-blue">24,200</span>
-                </div>
-                <div class="result-row">
-                    <span>Stoploss (SL):</span>
-                    <span id="resSL" class="text-red">24,150</span>
-                </div>
-                <div class="result-row">
-                    <span>Target (1:2 R:R):</span>
-                    <span id="resTarget" class="text-green">24,300</span>
-                </div>
-                <hr style="border-color: #2a2e39; margin: 8px 0;">
-                <div class="result-row">
-                    <span>Max Risk (P&L):</span>
-                    <span id="resRisk" class="text-red">- ₹1,250</span>
-                </div>
-                <div class="result-row">
-                    <span>Expected Profit:</span>
-                    <span id="resReward" class="text-green">+ ₹2,500</span>
-                </div>
-            </div>
-        </div>
-    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Stock / Index</th>
+                <th>Price (CMP)</th>
+                <th>Signal / Pattern</th>
+                <th>Buy Entry</th>
+                <th>Stoploss (SL)</th>
+                <th>Target (1:2)</th>
+            </tr>
+        </thead>
+        <tbody id="scanResults">
+            <tr>
+                <td colspan="6" style="text-align: center; color: #6b7280;">कोई डेटा नहीं। स्कैन शुरू करें।</td>
+            </tr>
+        </tbody>
+    </table>
 </div>
 
 <script>
-    function calculateTrade() {
-        const entry = parseFloat(document.getElementById('entryPrice').value);
-        const sl = parseFloat(document.getElementById('slPrice').value);
-        const qty = parseInt(document.getElementById('quantity').value);
+    // Selected Nifty Top Stocks (Yahoo Finance Tickers)
+    const stockList = [
+        { name: 'NIFTY 50', symbol: '^NSEI' },
+        { name: 'RELIANCE', symbol: 'RELIANCE.NS' },
+        { name: 'TCS', symbol: 'TCS.NS' },
+        { name: 'INFY', symbol: 'INFY.NS' },
+        { name: 'HDFC BANK', symbol: 'HDFCBANK.NS' },
+        { name: 'ICICI BANK', symbol: 'ICICIBANK.NS' },
+        { name: 'TATAMOTORS', symbol: 'TATAMOTORS.NS' }
+    ];
 
-        if (sl >= entry) {
-            alert("Stoploss price, Buy Entry price se kam honi chahiye!");
-            return;
+    async function fetchStockData(symbol) {
+        // Free Yahoo Finance Public CORS API Endpoint
+        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`;
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+        
+        try {
+            const response = await fetch(proxyUrl);
+            const data = await response.json();
+            const result = JSON.parse(data.contents).chart.result[0];
+            
+            const quotes = result.indicators.quote[0];
+            const len = quotes.close.length - 1;
+            
+            // Extract Last Candle OHLC
+            const open = quotes.open[len];
+            const high = quotes.high[len];
+            const low = quotes.low[len];
+            const close = quotes.close[len];
+            const prevClose = quotes.close[len - 1];
+
+            return { open, high, low, close, prevClose };
+        } catch (error) {
+            console.error("Error fetching " + symbol, error);
+            return null;
+        }
+    }
+
+    function checkBullishPattern(candle) {
+        const { open, high, low, close, prevClose } = candle;
+        const body = Math.abs(close - open);
+        const totalRange = high - low;
+        const lowerWick = Math.min(open, close) - low;
+        
+        let signal = null;
+
+        // Pattern 1: Hammer / Reversal (Lower wick is > 50% of candle range)
+        if (lowerWick > (totalRange * 0.5) && body < (totalRange * 0.3)) {
+            signal = "Bullish Hammer";
+        }
+        // Pattern 2: Bullish Reversal / Green Close after dip
+        else if (close > open && close > prevClose) {
+            signal = "Bullish Momentum";
         }
 
-        const riskPerPoint = entry - sl;
-        const target = entry + (riskPerPoint * 2); // 1:2 Target Ratio
+        if (signal) {
+            const entry = high + (high * 0.001); // Entry 0.1% above candle high
+            const sl = low - (low * 0.001);       // Stoploss 0.1% below candle low
+            const risk = entry - sl;
+            const target = entry + (risk * 2);    // 1:2 Risk-Reward Ratio
 
-        const totalRisk = riskPerPoint * qty;
-        const totalReward = (target - entry) * qty;
+            return { signal, entry, sl, target, cmp: close };
+        }
 
-        // Update Labels
-        document.getElementById('lblEntry').innerText = entry.toLocaleString();
-        document.getElementById('lblSL').innerText = sl.toLocaleString();
-        document.getElementById('lblTarget').innerText = target.toLocaleString();
+        return null;
+    }
 
-        document.getElementById('resEntry').innerText = entry.toLocaleString();
-        document.getElementById('resSL').innerText = sl.toLocaleString();
-        document.getElementById('resTarget').innerText = target.toLocaleString();
+    async function runScanner() {
+        const statusEl = document.getElementById('status');
+        const resultsEl = document.getElementById('scanResults');
+        
+        statusEl.innerText = "स्कैन जारी है... Free API से डेटा लाया जा रहा है...";
+        resultsEl.innerHTML = "";
 
-        document.getElementById('resRisk').innerText = `- ₹${totalRisk.toLocaleString()}`;
-        document.getElementById('resReward').innerText = `+ ₹${totalReward.toLocaleString()}`;
+        let foundCount = 0;
+
+        for (let stock of stockList) {
+            statusEl.innerText = `स्कैन कर रहे हैं: ${stock.name}...`;
+            const candle = await fetchStockData(stock.symbol);
+
+            if (candle) {
+                const result = checkBullishPattern(candle);
+                if (result) {
+                    foundCount++;
+                    resultsEl.innerHTML += `
+                        <tr>
+                            <td><strong>${stock.name}</strong></td>
+                            <td>₹${result.cmp.toFixed(2)}</td>
+                            <td><span class="badge-bullish">${result.signal}</span></td>
+                            <td class="buy-price">₹${result.entry.toFixed(2)}</td>
+                            <td class="sl-price">₹${result.sl.toFixed(2)}</td>
+                            <td class="target-price">₹${result.target.toFixed(2)}</td>
+                        </tr>
+                    `;
+                }
+            }
+        }
+
+        if (foundCount === 0) {
+            resultsEl.innerHTML = `<tr><td colspan="6" style="text-align:center;">आज किसी स्टॉक में स्ट्रांग बुलिश सिग्नल नहीं मिला।</td></tr>`;
+        }
+
+        statusEl.innerText = `स्कैन पूरा हुआ! कुल ${foundCount} बुलिश सिग्नल्स मिले।`;
     }
 </script>
 
