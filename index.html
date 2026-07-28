@@ -3,151 +3,206 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trending Stocks - Bullish & Bearish Dashboard</title>
+    <title>Nifty 50 Custom Candlestick Screener</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
         body { background-color: #0f172a; color: #f8fafc; padding: 20px; }
         .container { max-width: 1200px; margin: 0 auto; }
         
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #334155; }
-        h1 { font-size: 22px; color: #38bdf8; }
-        .timestamp { font-size: 13px; color: #94a3b8; }
+        h1 { font-size: 20px; color: #38bdf8; }
         
-        .section-title { font-size: 16px; margin: 20px 0 10px 0; display: flex; align-items: center; gap: 8px; }
-        .title-gainer { color: #34d399; }
-        .title-loser { color: #f87171; }
+        .layout { display: grid; grid-template-columns: 1fr 380px; gap: 20px; }
+        @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
         
-        table { width: 100%; border-collapse: collapse; background-color: #1e293b; border-radius: 8px; overflow: hidden; margin-bottom: 30px; }
-        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #334155; font-size: 13px; }
-        th { background-color: #334155; color: #94a3b8; font-weight: 600; }
+        .card { background-color: #1e293b; border-radius: 8px; padding: 15px; border: 1px solid #334155; }
         
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; display: inline-block; }
+        /* Table Styling */
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #334155; font-size: 13px; }
+        th { background-color: #334155; color: #94a3b8; }
+        tr:hover { background-color: #273549; cursor: pointer; }
+        
+        .badge { padding: 3px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; }
         .badge-bullish { background-color: #064e3b; color: #34d399; }
         .badge-bearish { background-color: #7f1d1d; color: #f87171; }
-        .badge-neutral { background-color: #334155; color: #cbd5e1; }
         
-        .price-green { color: #34d399; font-weight: bold; }
-        .price-red { color: #f87171; font-weight: bold; }
-        .price-blue { color: #38bdf8; font-weight: bold; }
+        /* Canvas Chart Container */
+        .chart-box { width: 100%; height: 320px; position: relative; }
+        canvas { background-color: #0b1120; border-radius: 6px; width: 100%; height: 100%; }
+        
+        .stock-info { margin-bottom: 10px; font-weight: bold; color: #38bdf8; display: flex; justify-content: space-between; }
+        .price-green { color: #34d399; }
+        .price-red { color: #f87171; }
+        .price-blue { color: #38bdf8; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <h1>Market Screener - Live Signals</h1>
-        <div class="timestamp" id="tradeTime">Date: --</div>
+        <h1>Market Screener with Native Canvas Chart</h1>
+        <div>Select stock to view chart</div>
     </header>
 
-    <div class="section-title title-gainer">🚀 Top Gainers (Bullish Opportunities)</div>
-    <table>
-        <thead>
-            <tr>
-                <th>Stock Name</th>
-                <th>Price (CMP)</th>
-                <th>Change (%)</th>
-                <th>Rating</th>
-                <th>Buy Entry (Above High)</th>
-                <th>Stoploss (Low)</th>
-                <th>Target (1:2)</th>
-            </tr>
-        </thead>
-        <tbody id="gainersTable"></tbody>
-    </table>
+    <div class="layout">
+        <!-- Stock List Table -->
+        <div class="card">
+            <h3>Nifty 50 Top Movers</h3>
+            <br>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Stock</th>
+                        <th>Price</th>
+                        <th>Change</th>
+                        <th>Signal</th>
+                    </tr>
+                </thead>
+                <tbody id="stockRows"></tbody>
+            </table>
+        </div>
 
-    <div class="section-title title-loser">🔻 Top Losers (Bearish Trend)</div>
-    <table>
-        <thead>
-            <tr>
-                <th>Stock Name</th>
-                <th>Price (CMP)</th>
-                <th>Change (%)</th>
-                <th>Rating</th>
-                <th>Sell Entry (Below Low)</th>
-                <th>Stoploss (High)</th>
-                <th>Target (1:2)</th>
-            </tr>
-        </thead>
-        <tbody id="losersTable"></tbody>
-    </table>
+        <!-- HTML5 Canvas Chart Panel -->
+        <div class="card">
+            <div class="stock-info">
+                <span id="chartTitle">TCS (Bullish Setup)</span>
+                <span id="chartPrice" class="price-green">₹2407.00</span>
+            </div>
+            <div class="chart-box">
+                <canvas id="candlestickCanvas"></canvas>
+            </div>
+            
+            <div style="margin-top: 15px; font-size: 12px; line-height: 1.6;">
+                <div>🔵 <strong>Buy Entry:</strong> <span id="valEntry" class="price-blue">-</span></div>
+                <div>🔴 <strong>Stoploss:</strong> <span id="valSL" class="price-red">-</span></div>
+                <div>🟢 <strong>Target (1:2):</strong> <span id="valTarget" class="price-green">-</span></div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
-    // आपका JSON डेटा यहाँ पास किया गया है
-    const marketData = {
-      "trending_stocks": {
-        "top_gainers": [
-          { "company_name": "Tata Consultancy Services", "price": "2407", "percent_change": "4.85", "high": "2409.20", "low": "2323", "overall_rating": "Moderately Bullish", "date": "2026-07-28", "time": "06:13:02" },
-          { "company_name": "Tech Mahindra", "price": "1629.20", "percent_change": "3.44", "high": "1634", "low": "1595.80", "overall_rating": "Bullish" },
-          { "company_name": "Eternal", "price": "305.30", "percent_change": "3.19", "high": "306", "low": "294.20", "overall_rating": "Bullish" },
-          { "company_name": "HCL Technologies", "price": "1335.90", "percent_change": "3.09", "high": "1342", "low": "1301", "overall_rating": "Moderately Bullish" },
-          { "company_name": "Nestle India", "price": "1489.40", "percent_change": "2.99", "high": "1491.40", "low": "1448.50", "overall_rating": "Bullish" }
-        ],
-        "top_losers": [
-          { "company_name": "Hindustan Unilever", "price": "2068.20", "percent_change": "-4.89", "high": "2213", "low": "2060", "overall_rating": "Bearish" },
-          { "company_name": "Bharat Electronics", "price": "395.30", "percent_change": "-2.91", "high": "406.15", "low": "392.10", "overall_rating": "Bearish" },
-          { "company_name": "Coal India", "price": "415.70", "percent_change": "-2.76", "high": "423.60", "low": "413.60", "overall_rating": "Bearish" }
-        ]
-      }
-    };
+    const stocks = [
+        { name: "TCS", price: 2407.0, change: 4.85, high: 2409.2, low: 2323.0, rating: "Bullish", candles: [2310, 2330, 2320, 2360, 2325, 2407] },
+        { name: "Tech Mahindra", price: 1629.2, change: 3.44, high: 1634.0, low: 1595.8, rating: "Bullish", candles: [1580, 1590, 1600, 1595, 1629.2] },
+        { name: "HCL Tech", price: 1335.9, change: 3.09, high: 1342.0, low: 1301.0, rating: "Bullish", candles: [1290, 1310, 1300, 1320, 1335.9] },
+        { name: "HUL", price: 2068.2, change: -4.89, high: 2213.0, low: 2060.0, rating: "Bearish", candles: [2200, 2180, 2150, 2110, 2068.2] },
+        { name: "Coal India", price: 415.7, change: -2.76, high: 423.6, low: 413.6, rating: "Bearish", candles: [430, 428, 425, 420, 415.7] }
+    ];
 
-    function renderDashboard() {
-        const gainers = marketData.trending_stocks.top_gainers;
-        const losers = marketData.trending_stocks.top_losers;
+    function renderTable() {
+        const tbody = document.getElementById('stockRows');
+        tbody.innerHTML = '';
 
-        // Set Timestamp
-        document.getElementById('tradeTime').innerText = `Data Time: ${gainers[0].date} | ${gainers[0].time}`;
-
-        // Render Top Gainers (Bullish Buy Entry Setup)
-        const gTable = document.getElementById('gainersTable');
-        gTable.innerHTML = '';
-        gainers.forEach(stock => {
-            const high = parseFloat(stock.high);
-            const low = parseFloat(stock.low);
-            const entry = high + 0.50; // High के ऊपर Buy Entry
-            const sl = low;            // Low पर Stoploss
-            const risk = entry - sl;
-            const target = entry + (risk * 2); // 1:2 Risk-Reward
-
-            gTable.innerHTML += `
-                <tr>
-                    <td><strong>${stock.company_name}</strong></td>
-                    <td>₹${parseFloat(stock.price).toFixed(2)}</td>
-                    <td class="price-green">+${stock.percent_change}%</td>
-                    <td><span class="badge badge-bullish">${stock.overall_rating}</span></td>
-                    <td class="price-blue">₹${entry.toFixed(2)}</td>
-                    <td class="price-red">₹${sl.toFixed(2)}</td>
-                    <td class="price-green">₹${target.toFixed(2)}</td>
-                </tr>
-            `;
-        });
-
-        // Render Top Losers (Bearish Sell Entry Setup)
-        const lTable = document.getElementById('losersTable');
-        lTable.innerHTML = '';
-        losers.forEach(stock => {
-            const high = parseFloat(stock.high);
-            const low = parseFloat(stock.low);
-            const entry = low - 0.50;  // Low के नीचे Sell Entry
-            const sl = high;           // High पर Stoploss
-            const risk = sl - entry;
-            const target = entry - (risk * 2); // 1:2 Target Downside
-
-            lTable.innerHTML += `
-                <tr>
-                    <td><strong>${stock.company_name}</strong></td>
-                    <td>₹${parseFloat(stock.price).toFixed(2)}</td>
-                    <td class="price-red">${stock.percent_change}%</td>
-                    <td><span class="badge badge-bearish">${stock.overall_rating}</span></td>
-                    <td class="price-blue">₹${entry.toFixed(2)}</td>
-                    <td class="price-red">₹${sl.toFixed(2)}</td>
-                    <td class="price-green">₹${target.toFixed(2)}</td>
+        stocks.forEach((stock, index) => {
+            tbody.innerHTML += `
+                <tr onclick="selectStock(${index})">
+                    <td><strong>${stock.name}</strong></td>
+                    <td>₹${stock.price.toFixed(2)}</td>
+                    <td class="${stock.change >= 0 ? 'price-green' : 'price-red'}">${stock.change}%</td>
+                    <td><span class="badge ${stock.rating === 'Bullish' ? 'badge-bullish' : 'badge-bearish'}">${stock.rating}</span></td>
                 </tr>
             `;
         });
     }
 
-    renderDashboard();
+    function selectStock(index) {
+        const stock = stocks[index];
+        document.getElementById('chartTitle').innerText = `${stock.name} (${stock.rating})`;
+        document.getElementById('chartPrice').innerText = `₹${stock.price.toFixed(2)}`;
+
+        let entry, sl, target;
+        if(stock.rating === "Bullish") {
+            entry = stock.high + 1;
+            sl = stock.low;
+            target = entry + ((entry - sl) * 2);
+        } else {
+            entry = stock.low - 1;
+            sl = stock.high;
+            target = entry - ((sl - entry) * 2);
+        }
+
+        document.getElementById('valEntry').innerText = `₹${entry.toFixed(2)}`;
+        document.getElementById('valSL').innerText = `₹${sl.toFixed(2)}`;
+        document.getElementById('valTarget').innerText = `₹${target.toFixed(2)}`;
+
+        drawCanvasChart(stock, entry, sl, target);
+    }
+
+    function drawCanvasChart(stock, entry, sl, target) {
+        const canvas = document.getElementById('candlestickCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Set high DPI Canvas size
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = canvas.parentElement.clientHeight;
+
+        const w = canvas.width;
+        const h = canvas.height;
+
+        ctx.clearRect(0, 0, w, h);
+
+        const prices = stock.candles;
+        const minP = Math.min(...prices, sl) - 10;
+        const maxP = Math.max(...prices, target, stock.high) + 10;
+
+        function getY(price) {
+            return h - ((price - minP) / (maxP - minP)) * (h - 40) - 20;
+        }
+
+        // Draw Reference Target, Entry, SL Lines
+        function drawLine(price, color, label) {
+            const y = getY(price);
+            ctx.beginPath();
+            ctx.setLineDash([5, 5]);
+            ctx.strokeStyle = color;
+            ctx.moveTo(0, y);
+            ctx.lineTo(w, y);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = color;
+            ctx.font = '11px sans-serif';
+            ctx.fillText(`${label}: ₹${price.toFixed(1)}`, 10, y - 4);
+        }
+
+        drawLine(target, '#34d399', 'TARGET');
+        drawLine(entry, '#38bdf8', 'BUY ENTRY');
+        drawLine(sl, '#f87171', 'STOPLOSS');
+
+        // Draw Candlesticks
+        const candleWidth = 24;
+        const spacing = w / (prices.length + 1);
+
+        prices.forEach((p, i) => {
+            const x = spacing * (i + 1);
+            const prevP = i === 0 ? p - 5 : prices[i - 1];
+            
+            const isGreen = p >= prevP;
+            const openY = getY(prevP);
+            const closeY = getY(p);
+            const highY = getY(Math.max(p, prevP) + 8);
+            const lowY = getY(Math.min(p, prevP) - 8);
+
+            ctx.strokeStyle = isGreen ? '#34d399' : '#f87171';
+            ctx.fillStyle = isGreen ? '#34d399' : '#f87171';
+
+            // Wick
+            ctx.beginPath();
+            ctx.moveTo(x, highY);
+            ctx.lineTo(x, lowY);
+            ctx.stroke();
+
+            // Body
+            const bodyY = Math.min(openY, closeY);
+            const bodyH = Math.max(Math.abs(closeY - openY), 4);
+            ctx.fillRect(x - candleWidth / 2, bodyY, candleWidth, bodyH);
+        });
+    }
+
+    renderTable();
+    selectStock(0); // Load First Stock Chart by Default
 </script>
 
 </body>
