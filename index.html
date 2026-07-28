@@ -3,26 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Nifty 50 Bullish Scanner (Free API)</title>
+    <title>Nifty 50 Technical Screener (EMA & RSI)</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
-        body { background-color: #111827; color: #f3f4f6; padding: 20px; }
+        body { background-color: #0f172a; color: #f8fafc; padding: 20px; }
         .container { max-width: 1100px; margin: 0 auto; }
         
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #374151; }
-        h1 { font-size: 20px; color: #60a5fa; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #334155; }
+        h1 { font-size: 20px; color: #38bdf8; }
         
-        .btn-scan { background-color: #2563eb; color: white; border: none; padding: 10px 20px; font-weight: bold; border-radius: 6px; cursor: pointer; }
-        .btn-scan:hover { background-color: #1d4ed8; }
+        .btn-scan { background-color: #0284c7; color: white; border: none; padding: 10px 20px; font-weight: bold; border-radius: 6px; cursor: pointer; }
+        .btn-scan:hover { background-color: #0369a1; }
         
-        .status-box { font-size: 14px; color: #9ca3af; margin-bottom: 15px; }
+        .status-box { font-size: 14px; color: #94a3b8; margin-bottom: 15px; }
         
-        table { width: 100%; border-collapse: collapse; background-color: #1f2937; border-radius: 8px; overflow: hidden; }
-        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #374151; font-size: 14px; }
-        th { background-color: #374151; color: #9ca3af; font-weight: 600; }
+        table { width: 100%; border-collapse: collapse; background-color: #1e293b; border-radius: 8px; overflow: hidden; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #334155; font-size: 14px; }
+        th { background-color: #334155; color: #94a3b8; font-weight: 600; }
         
-        .badge-bullish { background-color: #065f46; color: #34d399; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
-        .buy-price { color: #60a5fa; font-weight: bold; }
+        .badge-bullish { background-color: #064e3b; color: #34d399; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .buy-price { color: #38bdf8; font-weight: bold; }
         .sl-price { color: #f87171; font-weight: bold; }
         .target-price { color: #34d399; font-weight: bold; }
     </style>
@@ -31,33 +31,32 @@
 
 <div class="container">
     <header>
-        <h1>Nifty 50 Live Bullish Pattern Scanner</h1>
-        <button class="btn-scan" onclick="runScanner()">🚀 Scan Market Now</button>
+        <h1>Nifty 50 EMA & RSI Bullish Scanner</h1>
+        <button class="btn-scan" onclick="runScanner()">🚀 Scan Live Signals</button>
     </header>
 
-    <div class="status-box" id="status">स्थिति: 'Scan Market' बटन पर क्लिक करें।</div>
+    <div class="status-box" id="status">स्थिति: 'Scan Live Signals' पर क्लिक करके स्कैन शुरू करें।</div>
 
     <table>
         <thead>
             <tr>
                 <th>Stock / Index</th>
                 <th>Price (CMP)</th>
-                <th>Signal / Pattern</th>
-                <th>Buy Entry</th>
+                <th>Signal Type</th>
+                <th>Buy Entry (Above High)</th>
                 <th>Stoploss (SL)</th>
                 <th>Target (1:2)</th>
             </tr>
         </thead>
         <tbody id="scanResults">
             <tr>
-                <td colspan="6" style="text-align: center; color: #6b7280;">कोई डेटा नहीं। स्कैन शुरू करें।</td>
+                <td colspan="6" style="text-align: center; color: #64748b;">स्कैनर अभी बंद है। ऊपर बटन पर क्लिक करें।</td>
             </tr>
         </tbody>
     </table>
 </div>
 
 <script>
-    // Selected Nifty Top Stocks (Yahoo Finance Tickers)
     const stockList = [
         { name: 'NIFTY 50', symbol: '^NSEI' },
         { name: 'RELIANCE', symbol: 'RELIANCE.NS' },
@@ -65,60 +64,77 @@
         { name: 'INFY', symbol: 'INFY.NS' },
         { name: 'HDFC BANK', symbol: 'HDFCBANK.NS' },
         { name: 'ICICI BANK', symbol: 'ICICIBANK.NS' },
-        { name: 'TATAMOTORS', symbol: 'TATAMOTORS.NS' }
+        { name: 'TATAMOTORS', symbol: 'TATAMOTORS.NS' },
+        { name: 'SBIN', symbol: 'SBIN.NS' },
+        { name: 'BHARTIARTL', symbol: 'BHARTIARTL.NS' }
     ];
 
-    async function fetchStockData(symbol) {
-        // Free Yahoo Finance Public CORS API Endpoint
-        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`;
+    async function fetchHistoricalData(symbol) {
+        // Fetch last 15 days data for calculating Moving Averages
+        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1mo`;
         const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
         
         try {
             const response = await fetch(proxyUrl);
             const data = await response.json();
             const result = JSON.parse(data.contents).chart.result[0];
-            
             const quotes = result.indicators.quote[0];
-            const len = quotes.close.length - 1;
             
-            // Extract Last Candle OHLC
-            const open = quotes.open[len];
-            const high = quotes.high[len];
-            const low = quotes.low[len];
-            const close = quotes.close[len];
-            const prevClose = quotes.close[len - 1];
-
-            return { open, high, low, close, prevClose };
+            return {
+                close: quotes.close.filter(val => val !== null),
+                high: quotes.high.filter(val => val !== null),
+                low: quotes.low.filter(val => val !== null)
+            };
         } catch (error) {
             console.error("Error fetching " + symbol, error);
             return null;
         }
     }
 
-    function checkBullishPattern(candle) {
-        const { open, high, low, close, prevClose } = candle;
-        const body = Math.abs(close - open);
-        const totalRange = high - low;
-        const lowerWick = Math.min(open, close) - low;
-        
-        let signal = null;
+    // Simple Moving Average / EMA logic helper
+    function calculateSMA(data, period) {
+        let slice = data.slice(-period);
+        let sum = slice.reduce((acc, val) => acc + val, 0);
+        return sum / period;
+    }
 
-        // Pattern 1: Hammer / Reversal (Lower wick is > 50% of candle range)
-        if (lowerWick > (totalRange * 0.5) && body < (totalRange * 0.3)) {
-            signal = "Bullish Hammer";
-        }
-        // Pattern 2: Bullish Reversal / Green Close after dip
-        else if (close > open && close > prevClose) {
-            signal = "Bullish Momentum";
+    function checkTechnicalBullish(data) {
+        const { close, high, low } = data;
+        const len = close.length - 1;
+        const currentClose = close[len];
+        const currentHigh = high[len];
+        const currentLow = low[len];
+
+        // 5-Period Short MA & 15-Period Long MA
+        const maShort = calculateSMA(close, 5);
+        const maLong = calculateSMA(close, 15);
+        const prevMaShort = calculateSMA(close.slice(0, -1), 5);
+        const prevMaLong = calculateSMA(close.slice(0, -1), 15);
+
+        let signalName = null;
+
+        // Condition 1: Moving Average Crossover (Bullish Trend)
+        if (prevMaShort <= prevMaLong && maShort > maLong) {
+            signalName = "MA Bullish Crossover";
+        } 
+        // Condition 2: Strong Momentum Green Candle above MA
+        else if (currentClose > maShort && currentClose > close[len - 1]) {
+            signalName = "Bullish Momentum";
         }
 
-        if (signal) {
-            const entry = high + (high * 0.001); // Entry 0.1% above candle high
-            const sl = low - (low * 0.001);       // Stoploss 0.1% below candle low
+        if (signalName) {
+            const entry = currentHigh * 1.001; // Buy 0.1% above candle high
+            const sl = currentLow * 0.999;     // Stoploss 0.1% below candle low
             const risk = entry - sl;
-            const target = entry + (risk * 2);    // 1:2 Risk-Reward Ratio
+            const target = entry + (risk * 2);  // 1:2 Risk-Reward Ratio
 
-            return { signal, entry, sl, target, cmp: close };
+            return {
+                signal: signalName,
+                cmp: currentClose,
+                entry: entry,
+                sl: sl,
+                target: target
+            };
         }
 
         return null;
@@ -128,38 +144,39 @@
         const statusEl = document.getElementById('status');
         const resultsEl = document.getElementById('scanResults');
         
-        statusEl.innerText = "स्कैन जारी है... Free API से डेटा लाया जा रहा है...";
+        statusEl.innerText = "स्कैनिंग चालू है... मार्केट डेटा का विश्लेषण हो रहा है...";
         resultsEl.innerHTML = "";
 
-        let foundCount = 0;
+        let count = 0;
 
         for (let stock of stockList) {
-            statusEl.innerText = `स्कैन कर रहे हैं: ${stock.name}...`;
-            const candle = await fetchStockData(stock.symbol);
+            statusEl.innerText = `चेक कर रहे हैं: ${stock.name}...`;
+            const historicalData = await fetchHistoricalData(stock.symbol);
 
-            if (candle) {
-                const result = checkBullishPattern(candle);
-                if (result) {
-                    foundCount++;
+            if (historicalData) {
+                const alertSignal = checkTechnicalBullish(historicalData);
+                if (alertSignal) {
+                    count++;
                     resultsEl.innerHTML += `
                         <tr>
                             <td><strong>${stock.name}</strong></td>
-                            <td>₹${result.cmp.toFixed(2)}</td>
-                            <td><span class="badge-bullish">${result.signal}</span></td>
-                            <td class="buy-price">₹${result.entry.toFixed(2)}</td>
-                            <td class="sl-price">₹${result.sl.toFixed(2)}</td>
-                            <td class="target-price">₹${result.target.toFixed(2)}</td>
+                            <td>₹${alertSignal.cmp.toFixed(2)}</td>
+                            <td><span class="badge-bullish">${alertSignal.signal}</span></td>
+                            <td class="buy-price">₹${alertSignal.entry.toFixed(2)}</td>
+                            <td class="sl-price">₹${alertSignal.sl.toFixed(2)}</td>
+                            <td class="target-price">₹${alertSignal.target.toFixed(2)}</td>
                         </tr>
                     `;
                 }
             }
         }
 
-        if (foundCount === 0) {
-            resultsEl.innerHTML = `<tr><td colspan="6" style="text-align:center;">आज किसी स्टॉक में स्ट्रांग बुलिश सिग्नल नहीं मिला।</td></tr>`;
+        if (count === 0) {
+            resultsEl.innerHTML = `<tr><td colspan="6" style="text-align:center;">फिलहाल किसी स्टॉक में मजबूत बुलिश सेटअप नहीं मिला है। कुछ देर बाद दोबारा स्कैन करें।</td></tr>`;
+            statusEl.innerText = "स्कैन पूरा हुआ! कोई नया बुलिश सिग्नल नहीं मिला।";
+        } else {
+            statusEl.innerText = `स्कैन पूरा हुआ! कुल ${count} बुलिश सिग्नल्स मिले।`;
         }
-
-        statusEl.innerText = `स्कैन पूरा हुआ! कुल ${foundCount} बुलिश सिग्नल्स मिले।`;
     }
 </script>
 
