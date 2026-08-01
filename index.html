@@ -3,14 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nifty 50 Live Free API Screener</title>
+    <title>Nifty 50 Live Screener (Fast Fetch)</title>
     <style>
         :root {
             --bg-color: #0f172a;
             --card-bg: #1e293b;
             --text-color: #f8fafc;
-            --bullish-color: #22c55e;
-            --bearish-color: #ef4444;
             --border-color: #334155;
             --accent-color: #0284c7;
         }
@@ -33,11 +31,7 @@
         }
 
         h1 { margin: 0; font-size: 22px; color: #38bdf8; }
-
-        .status {
-            font-size: 13px;
-            color: #94a3b8;
-        }
+        .status { font-size: 13px; color: #94a3b8; }
 
         .table-container {
             overflow-x: auto;
@@ -104,10 +98,10 @@
 
     <div class="header">
         <div>
-            <h1>🚀 Nifty 50 Live API Screener</h1>
-            <span class="status" id="lastUpdated">Status: Loading Live Data...</span>
+            <h1>🚀 Nifty 50 Live Screener</h1>
+            <span class="status" id="lastUpdated">Status: Fetching Live Data...</span>
         </div>
-        <button class="btn-refresh" onclick="fetchLiveStockData()">🔄 Refresh Live Data</button>
+        <button class="btn-refresh" onclick="loadAllStocks()">🔄 Refresh Live Data</button>
     </div>
 
     <div class="table-container">
@@ -125,94 +119,120 @@
                 </tr>
             </thead>
             <tbody id="stockTableBody">
-                <tr><td colspan="8" style="text-align: center; padding: 20px;">Fetching Live Market Data... Please wait.</td></tr>
+                <tr><td colspan="8" style="text-align: center; padding: 20px;">Live Data Load Ho Raha Hai... Kripya Wait Karein.</td></tr>
             </tbody>
         </table>
     </div>
 
     <script>
-        // Nifty 50 Symbols (Yahoo Finance NSE Extension)
+        // Nifty 50 Stocks List
         const stocksList = [
-            { symbol: "RELIANCE.NS", name: "RELIANCE" },
-            { symbol: "TCS.NS", name: "TCS" },
-            { symbol: "HDFCBANK.NS", name: "HDFCBANK" },
-            { symbol: "INFY.NS", name: "INFY" },
-            { symbol: "ICICIBANK.NS", name: "ICICIBANK" },
-            { symbol: "BHARTIARTL.NS", name: "BHARTIARTL" },
-            { symbol: "SBIN.NS", name: "SBIN" },
-            { symbol: "TATAMOTORS.NS", name: "TATAMOTORS" },
-            { symbol: "LTIM.NS", name: "LTIM" },
-            { symbol: "AXISBANK.NS", name: "AXISBANK" }
+            "RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "INFY.NS", "ICICIBANK.NS",
+            "BHARTIARTL.NS", "SBIN.NS", "TATAMOTORS.NS", "LTIM.NS", "AXISBANK.NS"
         ];
 
-        async function fetchLiveStockData() {
+        async function fetchSingleStock(symbol) {
+            // Direct Public Endpoint (Without proxy block)
+            const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1m&range=1d`;
+            
+            // Backup CORS proxy fallback mechanism
+            const proxies = [
+                `https://corsproxy.io/?${encodeURIComponent(url)}`,
+                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+            ];
+
+            for (let proxy of proxies) {
+                try {
+                    const res = await fetch(proxy);
+                    if (!res.ok) continue;
+                    const data = await res.json();
+                    
+                    const result = data.chart.result[0];
+                    const meta = result.meta;
+                    
+                    const price = meta.regularMarketPrice;
+                    const prevClose = meta.chartPreviousClose || meta.previousClose;
+                    const changePercent = ((price - prevClose) / prevClose) * 100;
+                    const dayHigh = meta.regularMarketDayHigh || (price * 1.01);
+                    const dayLow = meta.regularMarketDayLow || (price * 0.99);
+
+                    return {
+                        symbol: symbol.replace(".NS", ""),
+                        price: price,
+                        change: changePercent,
+                        high: dayHigh,
+                        low: dayLow
+                    };
+                } catch (e) {
+                    // Failover to next proxy if one fails
+                    continue;
+                }
+            }
+            return null;
+        }
+
+        async function loadAllStocks() {
             const tbody = document.getElementById("stockTableBody");
             const lastUpdatedLabel = document.getElementById("lastUpdated");
             
-            tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 20px;">Fetching Live Market Data...</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 20px;">Fetching Live Data...</td></tr>`;
 
-            try {
-                // Free Public Yahoo Finance API Proxy
-                const symbolsQuery = stocksList.map(s => s.symbol).join(',');
-                const apiUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbolsQuery}`;
-                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
+            // Parallel Fast Data Fetching
+            const stockPromises = stocksList.map(sym => fetchSingleStock(sym));
+            const results = await Promise.all(stockPromises);
+            
+            tbody.innerHTML = "";
 
-                const response = await fetch(proxyUrl);
-                const data = await response.json();
-                const resultData = JSON.parse(data.contents).quoteResponse.result;
+            let validCount = 0;
 
-                tbody.innerHTML = "";
+            results.forEach(stock => {
+                if (!stock) return;
+                validCount++;
 
-                resultData.forEach(stock => {
-                    const price = stock.regularMarketPrice;
-                    const change = stock.regularMarketChangePercent;
-                    const dayHigh = stock.regularMarketDayHigh || price * 1.01;
-                    const dayLow = stock.regularMarketDayLow || price * 0.99;
+                const isBullish = stock.change >= 0;
+                const isStrongBuy = stock.change > 0.7; // 0.7% se jyada upar -> Strong Buy
+                
+                const support = (stock.low * 0.995).toFixed(2);
+                const resistance1 = (stock.high).toFixed(2);
+                const resistance2 = (stock.high * 1.015).toFixed(2);
 
-                    // Technical Logic Calculations (Dynamic)
-                    const isBullish = change >= 0;
-                    const isStrongBuy = change > 0.8; // Agar 0.8% se jyada upar hai
-                    const support = (dayLow * 0.995).toFixed(2);
-                    const resistance1 = (dayHigh).toFixed(2);
-                    const resistance2 = (dayHigh * 1.015).toFixed(2);
+                const row = document.createElement("tr");
 
-                    const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td><strong>${stock.symbol}</strong></td>
+                    <td>₹${stock.price.toFixed(2)}</td>
+                    <td style="color: ${isBullish ? '#4ade80' : '#f87171'}; font-weight: bold;">
+                        ${stock.change >= 0 ? '+' : ''}${stock.change.toFixed(2)}%
+                    </td>
+                    <td>
+                        <span class="badge ${isBullish ? 'badge-bullish' : 'badge-bearish'}">
+                            ${isBullish ? 'BULLISH 📈' : 'BEARISH 📉'}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge ${isStrongBuy ? 'badge-buy' : ''}">
+                            ${isStrongBuy ? 'BUY ENTRY 🔥' : (isBullish ? 'HOLD / BUY ON DIP' : 'WAIT / NO ENTRY')}
+                        </span>
+                    </td>
+                    <td style="color: #4ade80;">₹${support}</td>
+                    <td style="color: #f87171;">₹${resistance1}</td>
+                    <td style="color: #f87171; font-weight: bold;">₹${resistance2}</td>
+                `;
 
-                    row.innerHTML = `
-                        <td><strong>${stock.symbol.replace(".NS", "")}</strong></td>
-                        <td>₹${price.toFixed(2)}</td>
-                        <td style="color: ${isBullish ? '#4ade80' : '#f87171'}; font-weight: bold;">
-                            ${change >= 0 ? '+' : ''}${change.toFixed(2)}%
-                        </td>
-                        <td>
-                            <span class="badge ${isBullish ? 'badge-bullish' : 'badge-bearish'}">
-                                ${isBullish ? 'BULLISH 📈' : 'BEARISH 📉'}
-                            </span>
-                        </td>
-                        <td>
-                            <span class="badge ${isStrongBuy ? 'badge-buy' : ''}">
-                                ${isStrongBuy ? 'BUY ENTRY 🔥' : (isBullish ? 'HOLD / BUY ON DIP' : 'WAIT / NO ENTRY')}
-                            </span>
-                        </td>
-                        <td style="color: #4ade80;">₹${support}</td>
-                        <td style="color: #f87171;">₹${resistance1}</td>
-                        <td style="color: #f87171; font-weight: bold;">₹${resistance2}</td>
-                    `;
+                tbody.appendChild(row);
+            });
 
-                    tbody.appendChild(row);
-                });
-
+            if (validCount === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #f87171;">Network Error: Browser Extension (AdBlocker) off karke dekhein ya Refresh karein.</td></tr>`;
+                lastUpdatedLabel.innerText = "Status: Fetch Failed";
+            } else {
                 const now = new Date();
-                lastUpdatedLabel.innerText = `Last Live Fetch: ${now.toLocaleTimeString()}`;
-
-            } catch (error) {
-                console.error("API Fetch Error:", error);
-                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #f87171;">Failed to load live data. Refresh click karke try karein.</td></tr>`;
+                lastUpdatedLabel.innerText = `Last Updated: ${now.toLocaleTimeString()}`;
             }
         }
 
-        // Page load hote hi data fetch hoga
-        fetchLiveStockData();
+        // Auto Load On Page Open
+        loadAllStocks();
     </script>
 </body>
 </html>
