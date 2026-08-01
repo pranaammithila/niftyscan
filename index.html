@@ -3,182 +3,220 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nifty 50 Technical Screener (EMA & RSI)</title>
+    <title>Nifty 50 Smart Buy/Sell Dashboard</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
-        body { background-color: #0f172a; color: #f8fafc; padding: 20px; }
-        .container { max-width: 1100px; margin: 0 auto; }
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --bullish-color: #22c55e;
+            --bearish-color: #ef4444;
+            --border-color: #334155;
+            --accent-color: #3b82f6;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        h1 { margin: 0; font-size: 24px; color: #38bdf8; }
+
+        .search-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input, select {
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+            color: white;
+            outline: none;
+        }
+
+        input { flex-grow: 1; }
+
+        .table-container {
+            overflow-x: auto;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        th {
+            background-color: #0f172a;
+            color: #94a3b8;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+
+        tr:hover { background-color: #26354a; }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+            display: inline-block;
+        }
+
+        .badge-bullish { background-color: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid #22c55e; }
+        .badge-bearish { background-color: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
+        .badge-buy { background-color: #22c55e; color: black; animation: pulse 1.5s infinite; }
+
+        .vol-high { color: #facc15; font-weight: bold; }
         
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #334155; }
-        h1 { font-size: 20px; color: #38bdf8; }
-        
-        .btn-scan { background-color: #0284c7; color: white; border: none; padding: 10px 20px; font-weight: bold; border-radius: 6px; cursor: pointer; }
-        .btn-scan:hover { background-color: #0369a1; }
-        
-        .status-box { font-size: 14px; color: #94a3b8; margin-bottom: 15px; }
-        
-        table { width: 100%; border-collapse: collapse; background-color: #1e293b; border-radius: 8px; overflow: hidden; }
-        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #334155; font-size: 14px; }
-        th { background-color: #334155; color: #94a3b8; font-weight: 600; }
-        
-        .badge-bullish { background-color: #064e3b; color: #34d399; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
-        .buy-price { color: #38bdf8; font-weight: bold; }
-        .sl-price { color: #f87171; font-weight: bold; }
-        .target-price { color: #34d399; font-weight: bold; }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
+        .refresh-btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .refresh-btn:hover { background-color: #2563eb; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <header>
-        <h1>Nifty 50 EMA & RSI Bullish Scanner</h1>
-        <button class="btn-scan" onclick="runScanner()">🚀 Scan Live Signals</button>
-    </header>
+    <div class="header">
+        <h1>🚀 Nifty 50 Buy/Sell Signal Screener</h1>
+        <button class="refresh-btn" onclick="loadStockData()">🔄 Refresh Signals</button>
+    </div>
 
-    <div class="status-box" id="status">स्थिति: 'Scan Live Signals' पर क्लिक करके स्कैन शुरू करें।</div>
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Stock Ka Naam Khoje (e.g. RELIANCE)..." onkeyup="filterStocks()">
+        <select id="trendFilter" onchange="filterStocks()">
+            <option value="ALL">Sabhi Trend Dekhein</option>
+            <option value="BUY">Keval BUY Entry Waale</option>
+            <option value="Bullish">Keval Bullish</option>
+            <option value="Bearish">Keval Bearish</option>
+        </select>
+    </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Stock / Index</th>
-                <th>Price (CMP)</th>
-                <th>Signal Type</th>
-                <th>Buy Entry (Above High)</th>
-                <th>Stoploss (SL)</th>
-                <th>Target (1:2)</th>
-            </tr>
-        </thead>
-        <tbody id="scanResults">
-            <tr>
-                <td colspan="6" style="text-align: center; color: #64748b;">स्कैनर अभी बंद है। ऊपर बटन पर क्लिक करें।</td>
-            </tr>
-        </tbody>
-    </table>
-</div>
+    <div class="table-container">
+        <table id="stockTable">
+            <thead>
+                <tr>
+                    <th>Stock Name</th>
+                    <th>Current Price</th>
+                    <th>Trend Status</th>
+                    <th>Buy Trigger / Signal</th>
+                    <th>Chart Pattern</th>
+                    <th>Volume Alert</th>
+                    <th>Support Level</th>
+                    <th>Resistance 1</th>
+                    <th>Agala Resistance (R2)</th>
+                </tr>
+            </thead>
+            <tbody id="stockTableBody">
+                <!-- Data Javascript Se Load Hoga -->
+            </tbody>
+        </table>
+    </div>
 
-<script>
-    const stockList = [
-        { name: 'NIFTY 50', symbol: '^NSEI' },
-        { name: 'RELIANCE', symbol: 'RELIANCE.NS' },
-        { name: 'TCS', symbol: 'TCS.NS' },
-        { name: 'INFY', symbol: 'INFY.NS' },
-        { name: 'HDFC BANK', symbol: 'HDFCBANK.NS' },
-        { name: 'ICICI BANK', symbol: 'ICICIBANK.NS' },
-        { name: 'TATAMOTORS', symbol: 'TATAMOTORS.NS' },
-        { name: 'SBIN', symbol: 'SBIN.NS' },
-        { name: 'BHARTIARTL', symbol: 'BHARTIARTL.NS' }
-    ];
+    <script>
+        // Nifty 50 Dynamic Analysis Sample Dataset
+        const niftyStocks = [
+            { name: "RELIANCE", price: 2950.50, trend: "Bullish", signal: "BUY NEAR SUPPORT", pattern: "Double Bottom", volume: "High ⚡", s1: 2910.00, r1: 2980.00, r2: 3040.00 },
+            { name: "TCS", price: 3820.00, trend: "Bearish", signal: "WAIT / NO ENTRY", pattern: "Head & Shoulders", volume: "Normal", s1: 3780.00, r1: 3890.00, r2: 3950.00 },
+            { name: "HDFCBANK", price: 1640.25, trend: "Bullish", signal: "BUY ENTRY 🔥", pattern: "Breakout", volume: "Very High 🔥", s1: 1610.00, r1: 1650.00, r2: 1700.00 },
+            { name: "INFY", price: 1510.00, trend: "Bearish", signal: "RESISTANCE BREAKOUT FAIL", pattern: "Triangle Breakdown", volume: "High ⚡", s1: 1480.00, r1: 1540.00, r2: 1580.00 },
+            { name: "ICICIBANK", price: 1120.80, trend: "Bullish", signal: "BUY ENTRY 🔥", pattern: "Cup & Handle", volume: "Very High 🔥", s1: 1100.00, r1: 1135.00, r2: 1160.00 },
+            { name: "TATAMOTORS", price: 980.00, trend: "Bullish", signal: "HOLD / BUY ON DIP", pattern: "Uptrend Channel", volume: "Normal", s1: 950.00, r1: 1010.00, r2: 1050.00 },
+            { name: "SBIN", price: 840.15, trend: "Bearish", signal: "WAIT / SELL ON RISE", pattern: "Lower Low", volume: "Normal", s1: 820.00, r1: 860.00, r2: 890.00 },
+            { name: "BHARTIARTL", price: 1420.00, trend: "Bullish", signal: "BUY ENTRY 🔥", pattern: "Flag Pattern", volume: "High ⚡", s1: 1390.00, r1: 1450.00, r2: 1500.00 }
+        ];
 
-    async function fetchHistoricalData(symbol) {
-        // Fetch last 15 days data for calculating Moving Averages
-        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1mo`;
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-        
-        try {
-            const response = await fetch(proxyUrl);
-            const data = await response.json();
-            const result = JSON.parse(data.contents).chart.result[0];
-            const quotes = result.indicators.quote[0];
-            
-            return {
-                close: quotes.close.filter(val => val !== null),
-                high: quotes.high.filter(val => val !== null),
-                low: quotes.low.filter(val => val !== null)
-            };
-        } catch (error) {
-            console.error("Error fetching " + symbol, error);
-            return null;
-        }
-    }
+        function loadStockData() {
+            const tbody = document.getElementById("stockTableBody");
+            tbody.innerHTML = "";
 
-    // Simple Moving Average / EMA logic helper
-    function calculateSMA(data, period) {
-        let slice = data.slice(-period);
-        let sum = slice.reduce((acc, val) => acc + val, 0);
-        return sum / period;
-    }
+            niftyStocks.forEach(stock => {
+                const isBuy = stock.signal.includes("BUY ENTRY");
+                const row = document.createElement("tr");
 
-    function checkTechnicalBullish(data) {
-        const { close, high, low } = data;
-        const len = close.length - 1;
-        const currentClose = close[len];
-        const currentHigh = high[len];
-        const currentLow = low[len];
+                row.innerHTML = `
+                    <td><strong>${stock.name}</strong></td>
+                    <td>₹${stock.price.toFixed(2)}</td>
+                    <td><span class="badge ${stock.trend === 'Bullish' ? 'badge-bullish' : 'badge-bearish'}">${stock.trend}</span></td>
+                    <td><span class="badge ${isBuy ? 'badge-buy' : ''}">${stock.signal}</span></td>
+                    <td>${stock.pattern}</td>
+                    <td class="${stock.volume.includes('High') ? 'vol-high' : ''}">${stock.volume}</td>
+                    <td style="color: #4ade80;">₹${stock.s1.toFixed(2)}</td>
+                    <td style="color: #f87171;">₹${stock.r1.toFixed(2)}</td>
+                    <td style="color: #f87171; font-weight: bold;">₹${stock.r2.toFixed(2)}</td>
+                `;
 
-        // 5-Period Short MA & 15-Period Long MA
-        const maShort = calculateSMA(close, 5);
-        const maLong = calculateSMA(close, 15);
-        const prevMaShort = calculateSMA(close.slice(0, -1), 5);
-        const prevMaLong = calculateSMA(close.slice(0, -1), 15);
-
-        let signalName = null;
-
-        // Condition 1: Moving Average Crossover (Bullish Trend)
-        if (prevMaShort <= prevMaLong && maShort > maLong) {
-            signalName = "MA Bullish Crossover";
-        } 
-        // Condition 2: Strong Momentum Green Candle above MA
-        else if (currentClose > maShort && currentClose > close[len - 1]) {
-            signalName = "Bullish Momentum";
+                tbody.appendChild(row);
+            });
         }
 
-        if (signalName) {
-            const entry = currentHigh * 1.001; // Buy 0.1% above candle high
-            const sl = currentLow * 0.999;     // Stoploss 0.1% below candle low
-            const risk = entry - sl;
-            const target = entry + (risk * 2);  // 1:2 Risk-Reward Ratio
+        function filterStocks() {
+            const searchValue = document.getElementById("searchInput").value.toUpperCase();
+            const filterValue = document.getElementById("trendFilter").value;
+            const rows = document.getElementById("stockTableBody").getElementsByTagName("tr");
 
-            return {
-                signal: signalName,
-                cmp: currentClose,
-                entry: entry,
-                sl: sl,
-                target: target
-            };
-        }
+            for (let i = 0; i < rows.length; i++) {
+                const stockName = rows[i].getElementsByTagName("td")[0].innerText;
+                const trend = rows[i].getElementsByTagName("td")[2].innerText;
+                const signal = rows[i].getElementsByTagName("td")[3].innerText;
 
-        return null;
-    }
+                let matchesSearch = stockName.toUpperCase().indexOf(searchValue) > -1;
+                let matchesFilter = false;
 
-    async function runScanner() {
-        const statusEl = document.getElementById('status');
-        const resultsEl = document.getElementById('scanResults');
-        
-        statusEl.innerText = "स्कैनिंग चालू है... मार्केट डेटा का विश्लेषण हो रहा है...";
-        resultsEl.innerHTML = "";
+                if (filterValue === "ALL") matchesFilter = true;
+                else if (filterValue === "BUY" && signal.includes("BUY")) matchesFilter = true;
+                else if (filterValue === "Bullish" && trend.includes("Bullish")) matchesFilter = true;
+                else if (filterValue === "Bearish" && trend.includes("Bearish")) matchesFilter = true;
 
-        let count = 0;
-
-        for (let stock of stockList) {
-            statusEl.innerText = `चेक कर रहे हैं: ${stock.name}...`;
-            const historicalData = await fetchHistoricalData(stock.symbol);
-
-            if (historicalData) {
-                const alertSignal = checkTechnicalBullish(historicalData);
-                if (alertSignal) {
-                    count++;
-                    resultsEl.innerHTML += `
-                        <tr>
-                            <td><strong>${stock.name}</strong></td>
-                            <td>₹${alertSignal.cmp.toFixed(2)}</td>
-                            <td><span class="badge-bullish">${alertSignal.signal}</span></td>
-                            <td class="buy-price">₹${alertSignal.entry.toFixed(2)}</td>
-                            <td class="sl-price">₹${alertSignal.sl.toFixed(2)}</td>
-                            <td class="target-price">₹${alertSignal.target.toFixed(2)}</td>
-                        </tr>
-                    `;
+                if (matchesSearch && matchesFilter) {
+                    rows[i].style.display = "";
+                } else {
+                    rows[i].style.display = "none";
                 }
             }
         }
 
-        if (count === 0) {
-            resultsEl.innerHTML = `<tr><td colspan="6" style="text-align:center;">फिलहाल किसी स्टॉक में मजबूत बुलिश सेटअप नहीं मिला है। कुछ देर बाद दोबारा स्कैन करें।</td></tr>`;
-            statusEl.innerText = "स्कैन पूरा हुआ! कोई नया बुलिश सिग्नल नहीं मिला।";
-        } else {
-            statusEl.innerText = `स्कैन पूरा हुआ! कुल ${count} बुलिश सिग्नल्स मिले।`;
-        }
-    }
-</script>
-
+        // Auto load initial data
+        loadStockData();
+    </script>
 </body>
 </html>
