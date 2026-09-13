@@ -1,238 +1,220 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nifty 50 Live Screener (Fast Fetch)</title>
-    <style>
-        :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --text-color: #f8fafc;
-            --border-color: #334155;
-            --accent-color: #0284c7;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 10px;
-        }
-
-        h1 { margin: 0; font-size: 22px; color: #38bdf8; }
-        .status { font-size: 13px; color: #94a3b8; }
-
-        .table-container {
-            overflow-x: auto;
-            background-color: var(--card-bg);
-            border-radius: 8px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-            font-size: 14px;
-        }
-
-        th, td {
-            padding: 12px 15px;
-            border-bottom: 1px solid var(--border-color);
-            white-space: nowrap;
-        }
-
-        th {
-            background-color: #0f172a;
-            color: #94a3b8;
-            font-weight: 600;
-            font-size: 12px;
-            text-transform: uppercase;
-        }
-
-        tr:hover { background-color: #26354a; }
-
-        .badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 12px;
-            display: inline-block;
-        }
-
-        .badge-bullish { background-color: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid #22c55e; }
-        .badge-bearish { background-color: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
-        .badge-buy { background-color: #22c55e; color: black; animation: pulse 1.5s infinite; }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-
-        .btn-refresh {
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .btn-refresh:hover { background-color: #0369a1; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Live NSE Scanner & OI Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0b0f19;
+      color: #f1f5f9;
+      display: flex;
+      justify-content: center;
+      padding: 30px 15px;
+      margin: 0;
+    }
+    .scanner-box {
+      width: 100%;
+      max-width: 650px;
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #334155;
+      padding-bottom: 15px;
+      margin-bottom: 20px;
+    }
+    .header h2 { margin: 0; font-size: 20px; color: #38bdf8; }
+    .live-dot {
+      height: 10px;
+      width: 10px;
+      background: #22c55e;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+    }
+    .search-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    input {
+      flex: 1;
+      padding: 10px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #fff;
+      border-radius: 6px;
+      font-size: 15px;
+      text-transform: uppercase;
+    }
+    button {
+      padding: 10px 18px;
+      background: #38bdf8;
+      color: #0f172a;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: #0f172a;
+      padding: 14px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+    }
+    .stat-label { font-size: 12px; color: #94a3b8; margin-bottom: 4px; }
+    .stat-val { font-size: 18px; font-weight: bold; }
+    
+    .signal-box {
+      padding: 15px;
+      border-radius: 8px;
+      background: #0f172a;
+      border-left: 5px solid #38bdf8;
+      text-align: center;
+    }
+    .action { font-size: 24px; font-weight: 800; margin: 5px 0; }
+    .buy { color: #22c55e; }
+    .sell { color: #ef4444; }
+    .neutral { color: #facc15; }
+    .targets {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 15px;
+      font-size: 15px;
+    }
+  </style>
 </head>
 <body>
 
-    <div class="header">
-        <div>
-            <h1>🚀 Nifty 50 Live Screener</h1>
-            <span class="status" id="lastUpdated">Status: Fetching Live Data...</span>
-        </div>
-        <button class="btn-refresh" onclick="loadAllStocks()">🔄 Refresh Live Data</button>
+<div class="scanner-box">
+  <div class="header">
+    <h2>NSE Live OI + Signal Engine</h2>
+    <div><span class="live-dot"></span><span id="syncTime">Live</span></div>
+  </div>
+
+  <div class="search-row">
+    <input type="text" id="stockSymbol" value="SBIN" placeholder="Enter Symbol (e.g. SBIN, TATASTEEL)">
+    <button onclick="fetchLiveData()">Scan Stock</button>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Last Traded Price (CMP)</div>
+      <div class="stat-val" id="cmp">₹0.00</div>
     </div>
-
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Stock Name</th>
-                    <th>Live Price</th>
-                    <th>Change (%)</th>
-                    <th>Trend Status</th>
-                    <th>Buy Trigger</th>
-                    <th>Support Level</th>
-                    <th>Resistance 1</th>
-                    <th>Agala Resistance (R2)</th>
-                </tr>
-            </thead>
-            <tbody id="stockTableBody">
-                <tr><td colspan="8" style="text-align: center; padding: 20px;">Live Data Load Ho Raha Hai... Kripya Wait Karein.</td></tr>
-            </tbody>
-        </table>
+    <div class="stat-card">
+      <div class="stat-label">OI Trend Status</div>
+      <div class="stat-val" id="oiTrend">-</div>
     </div>
+  </div>
 
-    <script>
-        // Nifty 50 Stocks List
-        const stocksList = [
-            "RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "INFY.NS", "ICICIBANK.NS",
-            "BHARTIARTL.NS", "SBIN.NS", "TATAMOTORS.NS", "LTIM.NS", "AXISBANK.NS"
-        ];
+  <div class="signal-box">
+    <div class="stat-label">Market Action Signal</div>
+    <div class="action neutral" id="signal">-</div>
+    <div id="interpretation" style="font-size: 13px; color: #cbd5e1; margin-top: 5px;"></div>
 
-        async function fetchSingleStock(symbol) {
-            // Direct Public Endpoint (Without proxy block)
-            const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1m&range=1d`;
-            
-            // Backup CORS proxy fallback mechanism
-            const proxies = [
-                `https://corsproxy.io/?${encodeURIComponent(url)}`,
-                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
-            ];
+    <div class="targets">
+      <div><strong>Target:</strong> <span id="target" style="color:#38bdf8;">-</span></div>
+      <div><strong>Stop Loss:</strong> <span id="sl" style="color:#f43f5e;">-</span></div>
+    </div>
+  </div>
+</div>
 
-            for (let proxy of proxies) {
-                try {
-                    const res = await fetch(proxy);
-                    if (!res.ok) continue;
-                    const data = await res.json();
-                    
-                    const result = data.chart.result[0];
-                    const meta = result.meta;
-                    
-                    const price = meta.regularMarketPrice;
-                    const prevClose = meta.chartPreviousClose || meta.previousClose;
-                    const changePercent = ((price - prevClose) / prevClose) * 100;
-                    const dayHigh = meta.regularMarketDayHigh || (price * 1.01);
-                    const dayLow = meta.regularMarketDayLow || (price * 0.99);
+<script>
+// Yahan apna Google Web App URL paste karein
+const API_URL = "https://script.google.com/macros/s/AKfycbyd7dqKDnKLtvvwjO4DmW4NZQNQMIUc1EgWrXIqELXXwXlyZXaQPkwPOhepVcGaak88/exec";
 
-                    return {
-                        symbol: symbol.replace(".NS", ""),
-                        price: price,
-                        change: changePercent,
-                        high: dayHigh,
-                        low: dayLow
-                    };
-                } catch (e) {
-                    // Failover to next proxy if one fails
-                    continue;
-                }
-            }
-            return null;
-        }
+async function fetchLiveData() {
+  const symbol = document.getElementById('stockSymbol').value.trim();
+  if(!symbol) return;
 
-        async function loadAllStocks() {
-            const tbody = document.getElementById("stockTableBody");
-            const lastUpdatedLabel = document.getElementById("lastUpdated");
-            
-            tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 20px;">Fetching Live Data...</td></tr>`;
+  document.getElementById('signal').innerHTML = "Loading...";
 
-            // Parallel Fast Data Fetching
-            const stockPromises = stocksList.map(sym => fetchSingleStock(sym));
-            const results = await Promise.all(stockPromises);
-            
-            tbody.innerHTML = "";
+  try {
+    const res = await fetch(`${API_URL}?symbol=${encodeURIComponent(symbol)}`);
+    const data = await res.json();
 
-            let validCount = 0;
+    if(data.error) {
+      alert("Error: " + data.error);
+      return;
+    }
 
-            results.forEach(stock => {
-                if (!stock) return;
-                validCount++;
+    const cmp = data.cmp;
+    const prevClose = data.prevClose;
+    const curOI = data.currentOI;
+    const prevOI = data.prevOI;
 
-                const isBullish = stock.change >= 0;
-                const isStrongBuy = stock.change > 0.7; // 0.7% se jyada upar -> Strong Buy
-                
-                const support = (stock.low * 0.995).toFixed(2);
-                const resistance1 = (stock.high).toFixed(2);
-                const resistance2 = (stock.high * 1.015).toFixed(2);
+    document.getElementById('cmp').innerText = `₹${cmp.toFixed(2)}`;
+    document.getElementById('syncTime').innerText = `Updated: ${data.timestamp}`;
 
-                const row = document.createElement("tr");
+    const priceChange = cmp - prevClose;
+    const oiChange = curOI - prevOI;
+    const oiChangePercent = ((oiChange / prevOI) * 100).toFixed(2);
 
-                row.innerHTML = `
-                    <td><strong>${stock.symbol}</strong></td>
-                    <td>₹${stock.price.toFixed(2)}</td>
-                    <td style="color: ${isBullish ? '#4ade80' : '#f87171'}; font-weight: bold;">
-                        ${stock.change >= 0 ? '+' : ''}${stock.change.toFixed(2)}%
-                    </td>
-                    <td>
-                        <span class="badge ${isBullish ? 'badge-bullish' : 'badge-bearish'}">
-                            ${isBullish ? 'BULLISH 📈' : 'BEARISH 📉'}
-                        </span>
-                    </td>
-                    <td>
-                        <span class="badge ${isStrongBuy ? 'badge-buy' : ''}">
-                            ${isStrongBuy ? 'BUY ENTRY 🔥' : (isBullish ? 'HOLD / BUY ON DIP' : 'WAIT / NO ENTRY')}
-                        </span>
-                    </td>
-                    <td style="color: #4ade80;">₹${support}</td>
-                    <td style="color: #f87171;">₹${resistance1}</td>
-                    <td style="color: #f87171; font-weight: bold;">₹${resistance2}</td>
-                `;
+    let oiText = oiChange > 0 ? `▲ Badh raha hai (+${oiChangePercent}%)` : `▼ Ghat raha hai (${oiChangePercent}%)`;
+    document.getElementById('oiTrend').innerText = oiText;
 
-                tbody.appendChild(row);
-            });
+    let signalEl = document.getElementById('signal');
+    let target = 0, sl = 0, msg = "";
 
-            if (validCount === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #f87171;">Network Error: Browser Extension (AdBlocker) off karke dekhein ya Refresh karein.</td></tr>`;
-                lastUpdatedLabel.innerText = "Status: Fetch Failed";
-            } else {
-                const now = new Date();
-                lastUpdatedLabel.innerText = `Last Updated: ${now.toLocaleTimeString()}`;
-            }
-        }
+    // Live Technical OI Matrix Logic
+    if (priceChange > 0 && oiChange > 0) {
+      signalEl.className = "action buy";
+      signalEl.innerText = "BUY (Long Buildup)";
+      target = cmp + (cmp * 0.02); // 2% Target
+      sl = cmp - (cmp * 0.01);     // 1% SL
+      msg = "Price aur OI dono badh rahe hain. Fresh buying active hai.";
+    } 
+    else if (priceChange < 0 && oiChange > 0) {
+      signalEl.className = "action sell";
+      signalEl.innerText = "SELL (Short Buildup)";
+      target = cmp - (cmp * 0.02);
+      sl = cmp + (cmp * 0.01);
+      msg = "Price gir raha hai aur OI badh raha hai. Fresh sellers enter kar rahe hain.";
+    } 
+    else if (priceChange > 0 && oiChange < 0) {
+      signalEl.className = "action buy";
+      signalEl.innerText = "BUY (Short Covering)";
+      target = cmp + (cmp * 0.015);
+      sl = cmp - (cmp * 0.008);
+      msg = "Price badh raha hai par OI ghat raha hai. Short positions cover ho rahi hain.";
+    } 
+    else if (priceChange < 0 && oiChange < 0) {
+      signalEl.className = "action sell";
+      signalEl.innerText = "EXIT / SELL (Long Unwinding)";
+      target = cmp - (cmp * 0.015);
+      sl = cmp + (cmp * 0.008);
+      msg = "Price aur OI dono gir rahe hain. Buyers positions se nikal rahe hain.";
+    }
 
-        // Auto Load On Page Open
-        loadAllStocks();
-    </script>
+    document.getElementById('target').innerText = `₹${target.toFixed(2)}`;
+    document.getElementById('sl').innerText = `₹${sl.toFixed(2)}`;
+    document.getElementById('interpretation').innerText = msg;
+
+  } catch(err) {
+    document.getElementById('signal').innerText = "Fetch Failed";
+    console.error(err);
+  }
+}
+
+// Auto scan on load & refresh every 60 seconds
+window.onload = () => {
+  fetchLiveData();
+  setInterval(fetchLiveData, 60000);
+};
+</script>
+
 </body>
 </html>
