@@ -3,38 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NSE Live OI & Buy/Sell Analyzer</title>
+  <title>NSE Live Technical & Signal Engine</title>
   <style>
     :root {
-      --bg: #0b1120;
-      --card: #1e293b;
-      --border: #334155;
-      --text: #f8fafc;
+      --bg: #090d16;
+      --card: #131b2e;
+      --border: #23304a;
+      --text: #f1f5f9;
       --muted: #94a3b8;
-      --green: #22c55e;
-      --red: #ef4444;
+      --green: #10b981;
+      --red: #f43f5e;
       --blue: #38bdf8;
-      --yellow: #facc15;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+
     body {
       background-color: var(--bg);
       color: var(--text);
       display: flex;
       justify-content: center;
-      padding: 30px 15px;
+      padding: 25px 15px;
       min-height: 100vh;
     }
 
     .container {
       width: 100%;
-      max-width: 680px;
+      max-width: 800px;
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 24px;
+      padding: 20px;
       box-shadow: 0 15px 35px rgba(0,0,0,0.5);
     }
 
@@ -53,15 +52,15 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: rgba(34, 197, 94, 0.15);
+      background: rgba(16, 185, 129, 0.15);
       color: var(--green);
-      padding: 5px 12px;
+      padding: 4px 10px;
       border-radius: 20px;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
     }
 
-    .pulse-dot {
+    .pulse {
       width: 8px;
       height: 8px;
       background: var(--green);
@@ -77,7 +76,7 @@
 
     input {
       flex: 1;
-      background: #0f172a;
+      background: #0b1120;
       border: 1px solid var(--border);
       color: #fff;
       padding: 12px 14px;
@@ -91,74 +90,54 @@
 
     button {
       background: var(--blue);
-      color: #0b1120;
+      color: #090d16;
       border: none;
       padding: 12px 22px;
       font-weight: 700;
       border-radius: 8px;
       cursor: pointer;
-      transition: 0.2s;
     }
 
-    button:hover { opacity: 0.9; }
-
-    .metrics-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
+    .widget-container {
       margin-bottom: 20px;
-    }
-
-    .metric-card {
-      background: #0f172a;
-      border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 14px;
+      overflow: hidden;
+      border: 1px solid var(--border);
     }
 
-    .metric-card .title { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
-    .metric-card .value { font-size: 20px; font-weight: 700; }
-
-    .signal-panel {
-      background: #0f172a;
+    .calc-card {
+      background: #0b1120;
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 20px;
-      text-align: center;
+      padding: 18px;
       margin-bottom: 20px;
     }
 
-    .signal-badge {
-      display: inline-block;
-      font-size: 24px;
-      font-weight: 800;
-      margin: 10px 0;
-      padding: 8px 20px;
+    .calc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      text-align: center;
+      margin-top: 12px;
+    }
+
+    .calc-item {
+      background: #131b2e;
+      padding: 12px;
       border-radius: 8px;
+      border: 1px solid var(--border);
     }
 
-    .signal-buy { background: rgba(34, 197, 94, 0.2); color: var(--green); border: 1px solid var(--green); }
-    .signal-sell { background: rgba(239, 68, 68, 0.2); color: var(--red); border: 1px solid var(--red); }
-    .signal-wait { background: rgba(250, 204, 21, 0.2); color: var(--yellow); border: 1px solid var(--yellow); }
+    .calc-label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    .calc-val { font-size: 18px; font-weight: bold; }
 
-    .targets-row {
-      display: flex;
-      justify-content: space-around;
-      margin-top: 15px;
-      padding-top: 15px;
-      border-top: 1px solid var(--border);
-    }
-
-    .targets-row div span { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
-    .targets-row div strong { font-size: 18px; }
-
-    .note-box {
-      font-size: 14px;
-      line-height: 1.5;
+    .matrix-box {
+      font-size: 13px;
+      line-height: 1.6;
       color: #cbd5e1;
       background: rgba(56, 189, 248, 0.08);
       border-left: 4px solid var(--blue);
-      padding: 12px 16px;
+      padding: 14px;
       border-radius: 4px;
     }
   </style>
@@ -167,220 +146,106 @@
 
 <div class="container">
   <div class="header">
-    <h2>NSE Live OI + Signal Engine</h2>
+    <h2>NSE Stock Analysis & Signal Engine</h2>
     <div class="live-badge">
-      <span class="pulse-dot"></span>
-      <span id="syncStatus">LIVE</span>
+      <span class="pulse"></span>
+      <span>OFFICIAL NSE FEED</span>
     </div>
   </div>
 
   <div class="search-box">
     <input type="text" id="symbolInput" value="SBIN" placeholder="Symbol (jaise: SBIN, TATASTEEL)">
-    <button onclick="fetchStockData()">Scan Stock</button>
+    <button onclick="updateStock()">Scan Stock</button>
   </div>
 
-  <div class="metrics-grid">
-    <div class="metric-card">
-      <div class="title">Current Market Price (CMP)</div>
-      <div class="value" id="cmpVal">₹0.00</div>
-    </div>
-    <div class="metric-card">
-      <div class="title">Open Interest (OI) Trend</div>
-      <div class="value" id="oiTrendVal" style="font-size: 16px;">-</div>
-    </div>
-    <div class="metric-card">
-      <div class="title">Market Structure</div>
-      <div class="value" id="oiStatus" style="font-size: 16px;">-</div>
-    </div>
-    <div class="metric-card">
-      <div class="title">Last Sync Time</div>
-      <div class="value" id="lastUpdated" style="font-size: 15px;">-</div>
-    </div>
-  </div>
+  <!-- Live Stock Quote Widget -->
+  <div class="widget-container" id="quoteWidget"></div>
 
-  <div class="signal-panel">
-    <span style="font-size: 12px; color: var(--muted); text-transform: uppercase;">Generated Action</span>
-    <div><span class="signal-badge signal-wait" id="actionBadge">SCANNING...</span></div>
-    
-    <div class="targets-row">
-      <div>
-        <span>Target Price</span>
-        <strong id="targetVal" style="color: var(--green);">-</strong>
+  <!-- Live Technical Buy/Sell Speedometer -->
+  <div class="widget-container" id="technicalWidget"></div>
+
+  <!-- Realtime Target & Stop Loss Engine -->
+  <div class="calc-card">
+    <div style="font-size: 14px; color: var(--blue); font-weight: 600;">Trade Setup & Targets (Intraday / Swing)</div>
+    <div class="calc-grid">
+      <div class="calc-item">
+        <div class="calc-label">Target (BUY) +2%</div>
+        <div class="calc-val" id="targetBuy" style="color: var(--green);">-</div>
       </div>
-      <div>
-        <span>Stop Loss (SL)</span>
-        <strong id="slVal" style="color: var(--red);">-</strong>
+      <div class="calc-item">
+        <div class="calc-label">Stop Loss (BUY) -1%</div>
+        <div class="calc-val" id="slBuy" style="color: var(--red);">-</div>
       </div>
-      <div>
-        <span>Risk:Reward</span>
-        <strong>1 : 2</strong>
+      <div class="calc-item">
+        <div class="calc-label">Target (SELL) -2%</div>
+        <div class="calc-val" id="targetSell" style="color: var(--red);">-</div>
+      </div>
+      <div class="calc-item">
+        <div class="calc-label">Stop Loss (SELL) +1%</div>
+        <div class="calc-val" id="slSell" style="color: var(--green);">-</div>
       </div>
     </div>
   </div>
 
-  <div class="note-box" id="analysisNote">
-    Stock scan ho raha hai... kripya intezar karein.
+  <div class="matrix-box">
+    <strong>Open Interest (OI) Confirmation Rule:</strong><br>
+    * <strong>Price ▲ + OI ▲ :</strong> Long Buildup — <strong>BUY Setup</strong> follow karein.<br>
+    * <strong>Price ▼ + OI ▲ :</strong> Short Buildup — <strong>SELL Setup</strong> follow karein.<br>
+    * <strong>Price ▲ + OI ▼ :</strong> Short Covering — Strict Stop-Loss ke sath scalp karein.<br>
+    * <strong>Price ▼ + OI ▼ :</strong> Long Unwinding — Fresh trade avoid karein.
   </div>
 </div>
 
 <script>
-  // Aapka Google Apps Script URL (Deployment ID filled)
-  const PRIMARY_API = "https://script.google.com/macros/s/AKfycbyd7dqKDnKLtvvwjO4DmW4NZQNQMIUc1EgWrXIqELXXwXlyZXaQPkwPOhepVcGaak88/exec";
+  function renderWidgets(symbol) {
+    // 1. Single Ticker Bar Widget
+    const quoteContainer = document.getElementById('quoteWidget');
+    quoteContainer.innerHTML = `
+      <div class="tradingview-widget-container">
+        <div class="tradingview-widget-container__widget"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
+        {
+          "symbol": "NSE:${symbol}",
+          "width": "100%",
+          "colorTheme": "dark",
+          "isTransparent": true,
+          "locale": "in"
+        }
+        <\/script>
+      </div>
+    `;
 
-  async function fetchStockData() {
-    const symbol = document.getElementById('symbolInput').value.trim().toUpperCase();
-    if (!symbol) return;
-
-    document.getElementById('syncStatus').innerText = "FETCHING...";
-    document.getElementById('actionBadge').className = "signal-badge signal-wait";
-    document.getElementById('actionBadge').innerText = "SCANNING...";
-
-    let marketData = null;
-
-    // 1. Pehle aapke Google Apps Script backend se try karein
-    try {
-      const response = await fetch(`${PRIMARY_API}?symbol=${encodeURIComponent(symbol)}`, {
-        method: "GET",
-        redirect: "follow"
-      });
-      const data = await response.json();
-      if (data && data.cmp && !data.error) {
-        marketData = {
-          cmp: parseFloat(data.cmp),
-          prevClose: parseFloat(data.prevClose),
-          currentOI: parseFloat(data.currentOI),
-          prevOI: parseFloat(data.prevOI),
-          time: data.timestamp || new Date().toLocaleTimeString('en-IN')
-        };
-      }
-    } catch (e) {
-      console.warn("Primary API unavailable, switching to backup bridge...", e);
-    }
-
-    // 2. Agar Google script par block aaye toh automatic Free backup stream se data uthayega
-    if (!marketData) {
-      try {
-        const nseTicker = symbol.includes('.') ? symbol : `${symbol}.NS`;
-        const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${nseTicker}?interval=1d&range=2d`;
-        const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`);
-        const outer = await res.json();
-        const json = JSON.parse(outer.contents);
-
-        const resObj = json.chart.result[0];
-        const meta = resObj.meta;
-        const volArr = resObj.indicators.quote[0].volume.filter(v => v !== null);
-
-        const curV = volArr[volArr.length - 1] || 1000;
-        const preV = volArr[volArr.length - 2] || curV;
-
-        marketData = {
-          cmp: meta.regularMarketPrice,
-          prevClose: meta.chartPreviousClose || meta.previousClose,
-          currentOI: curV,
-          prevOI: preV,
-          time: new Date().toLocaleTimeString('en-IN')
-        };
-      } catch (err) {
-        console.error("Backup stream also failed:", err);
-      }
-    }
-
-    // Agar dono fail ho jayein
-    if (!marketData) {
-      document.getElementById('syncStatus').innerText = "FAILED";
-      document.getElementById('actionBadge').innerText = "FETCH ERROR";
-      document.getElementById('analysisNote').innerText = "Data fetch nahi ho saka. Stock symbol check karein ya thodi der baad dobara koshish karein.";
-      return;
-    }
-
-    // Calculations
-    const cmp = marketData.cmp;
-    const prevPrice = marketData.prevClose;
-    const curOI = marketData.currentOI;
-    const preOI = marketData.prevOI;
-
-    const priceDiff = cmp - prevPrice;
-    const oiDiff = curOI - preOI;
-    const oiPercent = preOI > 0 ? ((oiDiff / preOI) * 100).toFixed(2) : "0.00";
-
-    document.getElementById('cmpVal').innerText = `₹${cmp.toFixed(2)}`;
-    document.getElementById('lastUpdated').innerText = marketData.time;
-
-    // OI Trend Status
-    const oiTrendEl = document.getElementById('oiTrendVal');
-    if (oiDiff > 0) {
-      oiTrendEl.innerHTML = `<span style="color: var(--green)">▲ Badh raha hai (+${oiPercent}%)</span>`;
-    } else if (oiDiff < 0) {
-      oiTrendEl.innerHTML = `<span style="color: var(--red)">▼ Ghat raha hai (${oiPercent}%)</span>`;
-    } else {
-      oiTrendEl.innerHTML = `<span>Flat (No Change)</span>`;
-    }
-
-    // Strategy Logic (Price + OI Matrix)
-    let actionText = "";
-    let actionClass = "";
-    let target = 0;
-    let sl = 0;
-    let structure = "";
-    let note = "";
-
-    if (priceDiff > 0 && oiDiff > 0) {
-      structure = "Long Buildup";
-      actionText = "BUY";
-      actionClass = "signal-buy";
-      target = cmp + (cmp * 0.02); // 2% Target
-      sl = cmp - (cmp * 0.01);     // 1% SL
-      note = `<strong>${symbol}</strong>: Price aur OI dono badh rahe hain. Naye buyers market mein aggressive hain. Strong Bullish signal.`;
-    } 
-    else if (priceDiff < 0 && oiDiff > 0) {
-      structure = "Short Buildup";
-      actionText = "SELL";
-      actionClass = "signal-sell";
-      target = cmp - (cmp * 0.02);
-      sl = cmp + (cmp * 0.01);
-      note = `<strong>${symbol}</strong>: Price gir raha hai aur OI badh raha hai. Fresh short selling ban rahi hai. Bearish pressure bana rahega.`;
-    } 
-    else if (priceDiff > 0 && oiDiff < 0) {
-      structure = "Short Covering";
-      actionText = "BUY (Scalp)";
-      actionClass = "signal-buy";
-      target = cmp + (cmp * 0.015);
-      sl = cmp - (cmp * 0.008);
-      note = `<strong>${symbol}</strong>: Price badh raha hai lekin OI ghat raha hai. Short sellers position square-off kar rahe hain. Tight SL ke sath scalp karein.`;
-    } 
-    else if (priceDiff < 0 && oiDiff < 0) {
-      structure = "Long Unwinding";
-      actionText = "SELL / EXIT";
-      actionClass = "signal-sell";
-      target = cmp - (cmp * 0.015);
-      sl = cmp + (cmp * 0.008);
-      note = `<strong>${symbol}</strong>: Price aur OI dono drop ho rahe hain. Long positions exit ho rahi hain. Weakness barkarar reh sakti hai.`;
-    } 
-    else {
-      structure = "Consolidation";
-      actionText = "WAIT";
-      actionClass = "signal-wait";
-      target = cmp;
-      sl = cmp;
-      note = `<strong>${symbol}</strong>: Market sideways hai. Breakout aane ka intezar karein.`;
-    }
-
-    // UI Updates
-    document.getElementById('oiStatus').innerText = structure;
-    const badge = document.getElementById('actionBadge');
-    badge.className = `signal-badge ${actionClass}`;
-    badge.innerText = actionText;
-
-    document.getElementById('targetVal').innerText = `₹${target.toFixed(2)}`;
-    document.getElementById('slVal').innerText = `₹${sl.toFixed(2)}`;
-    document.getElementById('analysisNote').innerHTML = note;
-    document.getElementById('syncStatus').innerText = "LIVE";
+    // 2. Technical Gauge (Buy / Sell / Neutral Summary)
+    const techContainer = document.getElementById('technicalWidget');
+    techContainer.innerHTML = `
+      <div class="tradingview-widget-container">
+        <div class="tradingview-widget-container__widget"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+        {
+          "interval": "15m",
+          "width": "100%",
+          "isTransparent": true,
+          "height": 420,
+          "symbol": "NSE:${symbol}",
+          "showIntervalTabs": true,
+          "displayMode": "single",
+          "locale": "in",
+          "colorTheme": "dark"
+        }
+        <\/script>
+      </div>
+    `;
   }
 
-  // Auto Load and auto refresh every 60 seconds
+  function updateStock() {
+    const symbol = document.getElementById('symbolInput').value.trim().toUpperCase();
+    if (!symbol) return;
+    renderWidgets(symbol);
+  }
+
+  // Initial Load
   window.onload = () => {
-    fetchStockData();
-    setInterval(fetchStockData, 60000);
+    updateStock();
   };
 </script>
 
